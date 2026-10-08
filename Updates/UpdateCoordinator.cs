@@ -242,7 +242,7 @@ internal sealed class UpdateCoordinator : IDisposable
     /// </summary>
     internal async Task<VerifiedInstaller?> PrepareInstallationAsync()
     {
-        if (_disposed || _storeManaged)
+        if (_disposed || _storeManaged || ApplicationRuntime.IsTestMode)
             return null;
         try { await _operationGate.WaitAsync(_lifetimeToken).ConfigureAwait(false); }
         catch (OperationCanceledException) { return null; }

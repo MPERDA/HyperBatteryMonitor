@@ -256,9 +256,10 @@ public sealed partial class SettingsForm : Form
         _selectedLanguage = settings.Language;
         _selectedTheme = settings.Theme;
         _pendingSelectedDevice = settings.SelectedDevice;
-        _pendingStartupEnabled = settings.IsNewSettingsProfile
-            ? AppSettings.DefaultStartWithWindows
-            : _startupManager.IsEnabled();
+        _pendingStartupEnabled = ApplicationRuntime.IsTestMode ? false :
+            settings.IsNewSettingsProfile
+                ? AppSettings.DefaultStartWithWindows
+                : _startupManager.IsEnabled();
         _pendingNotifyOnLowBattery = settings.NotifyOnLowBattery;
         _pendingNotifyWhenFullyCharged = settings.NotifyWhenFullyCharged;
         _pendingBlinkOnCriticalBattery = settings.BlinkOnCriticalBattery;

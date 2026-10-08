@@ -135,7 +135,7 @@ internal sealed class UpdateDownloader
             throw new ArgumentException("The release metadata is invalid.", nameof(release));
 
         string expectedName = UpdateStateStore.GetInstallerFileName(release.Version);
-        string expectedPath = "/davidsantanaalves/HyperBatteryMonitor/releases/download/" +
+        string expectedPath = UpdateRepository.ReleaseDownloadPath +
             Uri.EscapeDataString(release.Tag) + "/" + Uri.EscapeDataString(expectedName);
         Uri url = release.DownloadUrl;
         if (url.Scheme != Uri.UriSchemeHttps || url.Host != "github.com" ||

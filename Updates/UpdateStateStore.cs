@@ -9,7 +9,6 @@ namespace HyperXBatteryTray.Updates;
 /// </summary>
 internal sealed class UpdateStateStore
 {
-    private const string AppDataDirectory = "Hyper Battery Monitor";
     private const string UpdatesDirectory = "Updates";
     private const string StateFileName = "downloaded-update.json";
     private const string InstallerPrefix = "HyperBatteryMonitor-Setup-v";
@@ -22,9 +21,7 @@ internal sealed class UpdateStateStore
     private readonly object _gate = new();
 
     public UpdateStateStore()
-        : this(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            AppDataDirectory))
+        : this(ApplicationRuntime.UserDataDirectory)
     {
     }
 

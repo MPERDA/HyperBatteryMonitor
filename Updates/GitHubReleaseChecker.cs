@@ -18,14 +18,11 @@ internal sealed record AvailableRelease(
 /// </summary>
 internal sealed class GitHubReleaseChecker
 {
-    private const string ApiUrl =
-        "https://api.github.com/repos/davidsantanaalves/HyperBatteryMonitor/releases?per_page=100";
+
     private const string InstallerPrefix = "HyperBatteryMonitor-Setup-v";
     private const string InstallerSuffix = ".exe";
-    private const string ReleaseDownloadPath =
-        "/davidsantanaalves/HyperBatteryMonitor/releases/download/";
-    private const string ReleasePagePath =
-        "/davidsantanaalves/HyperBatteryMonitor/releases/tag/";
+
+
 
     private static readonly HttpClient SharedHttpClient = CreateHttpClient();
     private readonly HttpClient _httpClient;
@@ -43,7 +40,7 @@ internal sealed class GitHubReleaseChecker
         if (channel is not (UpdateChannel.Stable or UpdateChannel.Beta))
             throw new ArgumentOutOfRangeException(nameof(channel));
 
-        using HttpRequestMessage request = new(HttpMethod.Get, ApiUrl);
+        using HttpRequestMessage request = new(HttpMethod.Get, UpdateRepository.ApiUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         request.Headers.UserAgent.ParseAdd("Hyper-Battery-Monitor-Updater/2.4");
 
@@ -92,7 +89,7 @@ internal sealed class GitHubReleaseChecker
             return false;
 
         if (!TryGetString(item, "html_url", out string? releaseUrl) ||
-            !TryGetTrustedUrl(releaseUrl, ReleasePagePath, out Uri? pageUrl) ||
+            !TryGetTrustedUrl(releaseUrl, UpdateRepository.ReleasePagePath, out Uri? pageUrl) ||
             !item.TryGetProperty("assets", out JsonElement assets) ||
             assets.ValueKind != JsonValueKind.Array)
             return false;
@@ -109,7 +106,7 @@ internal sealed class GitHubReleaseChecker
                 !TryGetString(asset, "digest", out string? digest) ||
                 !TryGetSha256(digest, out string? sha256) ||
                 !TryGetString(asset, "browser_download_url", out string? downloadUrl) ||
-                !TryGetTrustedUrl(downloadUrl, ReleaseDownloadPath, out Uri? installerUrl))
+                !TryGetTrustedUrl(downloadUrl, UpdateRepository.ReleaseDownloadPath, out Uri? installerUrl))
                 continue;
 
             // Keep only assets belonging to the same release tag and exact expected installer.

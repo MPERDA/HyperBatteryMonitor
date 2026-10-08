@@ -107,7 +107,8 @@ internal static class UpdateInstallerLauncher
     /// </summary>
     internal static async Task<bool> TryStartAsync(VerifiedInstaller installer)
     {
-        if (WindowsPackageDetector.IsPackaged() || !OperatingSystem.IsWindows() ||
+        if (ApplicationRuntime.IsTestMode || WindowsPackageDetector.IsPackaged() ||
+            !OperatingSystem.IsWindows() ||
             !Path.IsPathFullyQualified(installer.Path) ||
             !File.Exists(installer.Path) ||
             installer.Metadata.SizeBytes <= 0 ||

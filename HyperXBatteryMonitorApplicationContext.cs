@@ -476,7 +476,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
                 ? (_device!.IsMicrophoneMuted ? L("MicrophoneMuted") : L("MicrophoneOpen"))
                 : L("MicrophoneNA"));
 
-        string tooltip = $"{deviceName}\n{status}\n{battery}\n{microphone}";
+        string tooltip = $"{ApplicationRuntime.TestIndicator}{deviceName}\n{status}\n{battery}\n{microphone}";
         _notifyIcon.Text = tooltip.Length <= NotifyIconMaximumTextLength
             ? tooltip
             : tooltip[..NotifyIconMaximumTextLength];
@@ -1427,6 +1427,9 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
     }
     private async Task<bool> InstallDownloadedUpdateAsync()
     {
+        if (ApplicationRuntime.IsTestMode)
+            return false;
+
         VerifiedInstaller? installer = await _updateCoordinator.PrepareInstallationAsync();
         if (installer is null || !await UpdateInstallerLauncher.TryStartAsync(installer))
             return false;

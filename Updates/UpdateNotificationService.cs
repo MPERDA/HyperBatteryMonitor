@@ -23,7 +23,7 @@ internal static class UpdateNotificationService
         try
         {
             new ToastContentBuilder()
-                .AddText(Localization.Get(titleKey, language))
+                .AddText(ApplicationRuntime.TestIndicator + Localization.Get(titleKey, language))
                 .AddText(string.Format(Localization.Get(bodyKey, language), version))
                 .Show();
         }

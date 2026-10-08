@@ -7,12 +7,24 @@ internal static class Program
 {
     private const string ResetUserDataArgument = "--reset-user-data";
     private const string MigrateUserDataArgument = "--migrate-user-data";
-    private const string ApplicationMutexName =
-        "HyperBatteryMonitor_8D7E0A6C9D5B4F0B9C3E5F5E9C2A1B71";
 
     [STAThread]
     static int Main(string[] args)
     {
+        if (!ApplicationRuntime.Configure(args))
+        {
+            Debug.WriteLine("--test is supported only in DEBUG builds.");
+            return 2;
+        }
+
+        if (ApplicationRuntime.IsTestMode &&
+            (HasArgument(args, ResetUserDataArgument) ||
+             HasArgument(args, MigrateUserDataArgument)))
+        {
+            // Installer maintenance commands must never operate in test mode.
+            return 2;
+        }
+
         SettingsManager settingsManager = new();
 
         if (HasArgument(args, ResetUserDataArgument))
@@ -63,7 +75,7 @@ internal static class Program
 
         using Mutex applicationMutex = new(
             initiallyOwned: false,
-            ApplicationMutexName);
+            ApplicationRuntime.MutexName);
 
         ApplicationConfiguration.Initialize();
         Application.Run(

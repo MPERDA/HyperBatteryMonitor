@@ -18,6 +18,9 @@ public sealed class StartupManager
 
     public bool IsEnabled()
     {
+        if (ApplicationRuntime.IsTestMode)
+            return false;
+
         using RegistryKey? key =
             Registry.CurrentUser.OpenSubKey(RunKey);
 
@@ -31,6 +34,9 @@ public sealed class StartupManager
 
     public void MigrateLegacyRegistration()
     {
+        if (ApplicationRuntime.IsTestMode)
+            return;
+
         using RegistryKey? readKey =
             Registry.CurrentUser.OpenSubKey(RunKey);
 
@@ -48,6 +54,9 @@ public sealed class StartupManager
 
     public void Enable()
     {
+        if (ApplicationRuntime.IsTestMode)
+            throw new InvalidOperationException("Windows startup registration is unavailable in test mode.");
+
         string executablePath = Application.ExecutablePath;
 
         if (string.IsNullOrWhiteSpace(executablePath))
@@ -92,6 +101,9 @@ public sealed class StartupManager
 
     public void Disable()
     {
+        if (ApplicationRuntime.IsTestMode)
+            return; // Never remove production startup entries from test mode.
+
         using RegistryKey? key =
             Registry.CurrentUser.OpenSubKey(
                 RunKey,

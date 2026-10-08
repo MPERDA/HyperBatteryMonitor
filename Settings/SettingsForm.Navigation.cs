@@ -453,6 +453,7 @@ public sealed partial class SettingsForm : Form
         startupText.Controls.Add(startupDescription, 0, 1);
         startup.Controls.Add(startupText, 1, 0);
         _startupToggle = new ToggleSwitchControl { Dock = DockStyle.None, Anchor = AnchorStyles.Right, Size = ScaleUiSize(42, 24), Checked = _pendingStartupEnabled, DarkMode = EffectiveTheme == AppTheme.Dark, Margin = new Padding(0) };
+        _startupToggle.Enabled = !ApplicationRuntime.IsTestMode;
         _startupToggle.CheckedChanged += (_, _) => _pendingStartupEnabled = _startupToggle.Checked;
         startup.Controls.Add(_startupToggle, 2, 0);
     }

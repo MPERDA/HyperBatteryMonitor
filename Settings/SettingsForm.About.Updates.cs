@@ -128,7 +128,8 @@ public sealed partial class SettingsForm
 
     private async Task InstallUpdateFromAboutAsync()
     {
-        if (_installLaunchInProgress || _installDownloadedUpdateAsync is null ||
+        if (ApplicationRuntime.IsTestMode || _installLaunchInProgress ||
+            _installDownloadedUpdateAsync is null ||
             _updateCoordinator is null || _updateCoordinator.IsStoreManaged ||
             _pendingUpdateChannel != _settings.UpdateChannel ||
             _pendingUpdateDownloadMode != _settings.UpdateDownloadMode ||
@@ -271,7 +272,8 @@ public sealed partial class SettingsForm
             UpdateStatus.StoreManaged => "UpdatesStoreManaged",
             _ => "UpdatesIdle"
         };
-        _updatesStatusLabel.Text = string.Format(L(key), snapshot.Version ?? string.Empty, snapshot.Percent);
+        _updatesStatusLabel.Text = ApplicationRuntime.TestIndicator +
+            string.Format(L(key), snapshot.Version ?? string.Empty, snapshot.Percent);
         bool busy = snapshot.Status is UpdateStatus.Checking or UpdateStatus.Downloading;
         if (_updatesCheckButton is { IsDisposed: false })
             _updatesCheckButton.Enabled = !busy && !pendingChanged && !_installLaunchInProgress;
@@ -288,7 +290,8 @@ public sealed partial class SettingsForm
         if (_updatesInstallButton is { IsDisposed: false })
         {
             _updatesInstallButton.Visible = snapshot.Status is UpdateStatus.Downloaded or UpdateStatus.InstallationFailed;
-            _updatesInstallButton.Enabled = !pendingChanged && !_installLaunchInProgress &&
+            _updatesInstallButton.Enabled = !ApplicationRuntime.IsTestMode &&
+                !pendingChanged && !_installLaunchInProgress &&
                 _installDownloadedUpdateAsync is not null;
         }
         if (_updatesLaterButton is { IsDisposed: false })

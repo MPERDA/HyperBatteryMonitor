@@ -342,7 +342,8 @@ public sealed partial class SettingsForm : Form
         _pendingSelectedDevice = defaults.SelectedDevice;
         _pendingUpdateChannel = defaults.UpdateChannel;
         _pendingUpdateDownloadMode = defaults.UpdateDownloadMode;
-        _pendingStartupEnabled = AppSettings.DefaultStartWithWindows;
+        _pendingStartupEnabled = !ApplicationRuntime.IsTestMode &&
+            AppSettings.DefaultStartWithWindows;
         _pendingNotifyOnLowBattery = defaults.NotifyOnLowBattery;
         _pendingNotifyWhenFullyCharged = defaults.NotifyWhenFullyCharged;
         _pendingBlinkOnCriticalBattery = defaults.BlinkOnCriticalBattery;
@@ -408,8 +409,11 @@ public sealed partial class SettingsForm : Form
         _settings.ThemeConfigured = true;
         try
         {
-            if (_pendingStartupEnabled) _startupManager.Enable();
-            else _startupManager.Disable();
+            if (!ApplicationRuntime.IsTestMode)
+            {
+                if (_pendingStartupEnabled) _startupManager.Enable();
+                else _startupManager.Disable();
+            }
 
             _settings.IsNewSettingsProfile = false;
         }
@@ -483,7 +487,7 @@ public sealed partial class SettingsForm : Form
         _ => L("ThemeLight")
     };
 
-    private string GetWindowTitle() => string.Format(
+    private string GetWindowTitle() => ApplicationRuntime.TestIndicator + string.Format(
         L("WindowTitle"),
         Application.ProductName,
         Application.ProductVersion.Split('+')[0]);

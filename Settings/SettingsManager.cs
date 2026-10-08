@@ -8,7 +8,6 @@ namespace HyperXBatteryTray.Settings;
 
 public sealed class SettingsManager
 {
-    private const string CurrentSettingsDirectoryName = "Hyper Battery Monitor";
     private const string LegacySettingsDirectoryName = "HyperXBatteryTray";
     private const string SettingsFileName = "settings.json";
     private const string BatteryHistoryFileName = "battery-history.json";
@@ -32,9 +31,7 @@ public sealed class SettingsManager
         string localApplicationData = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
 
-        _settingsDirectory = Path.Combine(
-            localApplicationData,
-            CurrentSettingsDirectoryName);
+        _settingsDirectory = ApplicationRuntime.UserDataDirectory;
 
         _settingsFile = Path.Combine(
             _settingsDirectory,
@@ -177,6 +174,9 @@ public sealed class SettingsManager
 
     public void MigrateLegacyUserData()
     {
+        if (ApplicationRuntime.IsTestMode)
+            return; // Never read, migrate or delete production legacy data in test mode.
+
         if (!Directory.Exists(_legacySettingsDirectory) ||
             PathsEqual(_legacySettingsDirectory, _settingsDirectory))
         {
@@ -213,6 +213,8 @@ public sealed class SettingsManager
     public void DeleteUserData()
     {
         DeleteDirectoryIfExists(_settingsDirectory);
+        if (ApplicationRuntime.IsTestMode)
+            return; // Never delete production/legacy user data from the test profile.
 
         if (!PathsEqual(
                 _legacySettingsDirectory,
