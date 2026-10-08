@@ -340,6 +340,8 @@ public sealed partial class SettingsForm : Form
 
         AppSettings defaults = AppSettings.CreateDefault();
         _pendingSelectedDevice = defaults.SelectedDevice;
+        _pendingUpdateChannel = defaults.UpdateChannel;
+        _pendingUpdateDownloadMode = defaults.UpdateDownloadMode;
         _pendingStartupEnabled = AppSettings.DefaultStartWithWindows;
         _pendingNotifyOnLowBattery = defaults.NotifyOnLowBattery;
         _pendingNotifyWhenFullyCharged = defaults.NotifyWhenFullyCharged;
@@ -389,6 +391,8 @@ public sealed partial class SettingsForm : Form
     private bool ApplySettings()
     {
         _settings.SelectedDevice = _pendingSelectedDevice;
+        _settings.UpdateChannel = _pendingUpdateChannel;
+        _settings.UpdateDownloadMode = _pendingUpdateDownloadMode;
         _settings.DisplayMode = _pendingDisplayMode;
         _settings.AdvancedDisplayMode = _pendingAdvancedDisplayMode;
         _settings.BatteryColors = CloneBatteryColors(_pendingBatteryColors);
@@ -421,6 +425,8 @@ public sealed partial class SettingsForm : Form
 
     private void SettingsForm_FormClosed(object? sender, FormClosedEventArgs e)
     {
+        if (_updateCoordinator is not null)
+            _updateCoordinator.Changed -= OnUpdateStatusChanged;
         StopDevicePreview();
         UnsubscribeFromDeviceStatusEvents(_device);
 

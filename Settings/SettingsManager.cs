@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using HyperXBatteryTray.Devices;
+using HyperXBatteryTray.Updates;
 
 namespace HyperXBatteryTray.Settings;
 
@@ -404,5 +405,11 @@ public sealed class SettingsManager
 
         if (!Enum.IsDefined(settings.AdvancedDisplayMode))
             settings.AdvancedDisplayMode = AdvancedDisplayMode.BatteryGradient;
+
+        if (!Enum.IsDefined(settings.UpdateChannel))
+            settings.UpdateChannel = UpdateChannel.Stable;
+
+        if (!Enum.IsDefined(settings.UpdateDownloadMode))
+            settings.UpdateDownloadMode = UpdateDownloadMode.NotifyBeforeDownload;
     }
 }

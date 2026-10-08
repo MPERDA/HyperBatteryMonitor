@@ -1,5 +1,7 @@
 using System.Drawing;
 using System.Text.Json.Serialization;
+using UpdateChannelEnum = HyperXBatteryTray.Updates.UpdateChannel;
+using UpdateDownloadModeEnum = HyperXBatteryTray.Updates.UpdateDownloadMode;
 
 namespace HyperXBatteryTray.Settings;
 
@@ -58,6 +60,8 @@ public sealed class AppSettings
     public AppLanguage Language { get; set; } = AppLanguage.English;
     public AppTheme Theme { get; set; } = AppTheme.System;
     public bool ThemeConfigured { get; set; }
+    public UpdateChannelEnum UpdateChannel { get; set; } = UpdateChannelEnum.Stable;
+    public UpdateDownloadModeEnum UpdateDownloadMode { get; set; } = UpdateDownloadModeEnum.NotifyBeforeDownload;
 
     public static AppSettings CreateDefault()
     {
@@ -76,7 +80,9 @@ public sealed class AppSettings
             BatteryColors = CreateDefaultColors(),
             Language = AppLanguage.English,
             Theme = AppTheme.System,
-            ThemeConfigured = false
+            ThemeConfigured = false,
+            UpdateChannel = UpdateChannelEnum.Stable,
+            UpdateDownloadMode = UpdateDownloadModeEnum.NotifyBeforeDownload
         };
     }
 

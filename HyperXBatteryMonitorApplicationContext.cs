@@ -7,6 +7,7 @@ using HyperXBatteryTray.Devices;
 using HyperXBatteryTray.Monitoring;
 using HyperXBatteryTray.Notifications;
 using HyperXBatteryTray.Settings;
+using HyperXBatteryTray.Updates;
 
 namespace HyperXBatteryTray;
 
@@ -23,6 +24,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
     private readonly SettingsManager _settingsManager;
     private readonly AppSettings _settings;
     private readonly NotificationService _notificationService;
+    private readonly UpdateCoordinator _updateCoordinator;
     private readonly BatteryRemainingTimeEstimator _batteryRemainingTimeEstimator;
 
     private Icon? _currentApplicationIcon;
@@ -41,6 +43,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         _settingsManager = new SettingsManager();
         _settings = _settingsManager.Load();
         _notificationService = new NotificationService();
+        _updateCoordinator = new UpdateCoordinator(_settings);
         _batteryRemainingTimeEstimator = new BatteryRemainingTimeEstimator(
             _settingsManager.LoadBatteryHistory());
 
@@ -79,6 +82,8 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
 
         if (_batteryMonitor != null)
             _batteryMonitor.Start();
+
+        _updateCoordinator.Start();
     }
 
     private void InitializeSelectedDevice()
@@ -280,7 +285,9 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
             _settings,
             _device,
             _isCharging,
-            GetCurrentBatteryRemainingTime());
+            GetCurrentBatteryRemainingTime(),
+            _updateCoordinator,
+            InstallDownloadedUpdateAsync);
         _settingsForm.SettingsApplied += SettingsForm_SettingsApplied;
         _settingsForm.FormClosed += SettingsForm_FormClosed;
         _settingsForm.Show();
@@ -300,6 +307,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         try
         {
             _settingsManager.Save(_settings);
+            _updateCoordinator.PreferencesChanged();
             _notificationService.ResetState();
             InitializeSelectedDevice();
             _settingsForm?.SetDevice(_device);
@@ -1417,10 +1425,24 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
             (int)Math.Round(first.G + (second.G - first.G) * t),
             (int)Math.Round(first.B + (second.B - first.B) * t));
     }
+    private async Task<bool> InstallDownloadedUpdateAsync()
+    {
+        VerifiedInstaller? installer = await _updateCoordinator.PrepareInstallationAsync();
+        if (installer is null || !await UpdateInstallerLauncher.TryStartAsync(installer))
+            return false;
+
+        // The launcher verifies the installer again after this process has exited.
+        // ExitThreadCore disposes the updater, forms, tray icons, timers and HID.
+        _updateCoordinator.ClearInstallationFailure();
+        ExitThread();
+        return true;
+    }
+
     private void ExitApplication(object? sender, EventArgs e) => ExitThread();
 
     protected override void ExitThreadCore()
     {
+        _updateCoordinator.Dispose();
         _settingsForm?.Close();
         _blinkTimer?.Stop();
         _blinkTimer?.Dispose();

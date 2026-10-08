@@ -114,7 +114,10 @@ public sealed partial class SettingsForm : Form
         licensesLink.LinkClicked += (_, _) => OpenExternalUrl("https://github.com/davidsantanaalves/HyperBatteryMonitor/blob/main/LICENSE");
         legal.Controls.Add(licensesLink, 1, 2);
 
-        // Keep any unused vertical space outside the Legal card. Without a trailing
+        // Updates follow Legal, with the flexible spacer after both cards.
+        BuildAboutUpdatesCard();
+
+        // Keep any unused vertical space outside the About cards. Without a trailing
         // flexible row, WinForms can visually stretch the final content row to fill
         // the remaining page height after the acknowledgements section was removed.
         int spacerRow = page.RowCount++;

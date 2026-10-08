@@ -8,12 +8,17 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using HyperXBatteryTray.Devices;
 using HyperXBatteryTray.Monitoring;
+using HyperXBatteryTray.Updates;
 
 namespace HyperXBatteryTray.Settings;
 
 public sealed partial class SettingsForm : Form
 {
     private readonly AppSettings _settings;
+    private readonly UpdateCoordinator? _updateCoordinator;
+    private readonly Func<Task<bool>>? _installDownloadedUpdateAsync;
+    private UpdateChannel _pendingUpdateChannel;
+    private UpdateDownloadMode _pendingUpdateDownloadMode;
     private readonly StartupManager _startupManager;
     private readonly PngIconCache _iconCache;
     private DeviceSelector _deviceSelector = null!;
@@ -221,8 +226,25 @@ public sealed partial class SettingsForm : Form
         IHyperXDevice? device = null,
         bool isCharging = false,
         TimeSpan? batteryRemainingTime = null)
+        : this(settings, device, isCharging, batteryRemainingTime, null, null)
+    {
+    }
+
+    internal SettingsForm(
+        AppSettings settings,
+        IHyperXDevice? device,
+        bool isCharging,
+        TimeSpan? batteryRemainingTime,
+        UpdateCoordinator? updateCoordinator,
+        Func<Task<bool>>? installDownloadedUpdateAsync)
     {
         _settings = settings;
+        _updateCoordinator = updateCoordinator;
+        _installDownloadedUpdateAsync = installDownloadedUpdateAsync;
+        _pendingUpdateChannel = settings.UpdateChannel;
+        _pendingUpdateDownloadMode = settings.UpdateDownloadMode;
+        if (_updateCoordinator is not null)
+            _updateCoordinator.Changed += OnUpdateStatusChanged;
         _runtimeDevice = device;
         _device = device;
         _runtimeIsCharging = isCharging;
