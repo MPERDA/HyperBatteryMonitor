@@ -34,6 +34,46 @@ internal sealed class UpdateStateStore
 
     internal string CacheDirectory => _cacheDirectory;
 
+    /// <summary>
+    /// Removes abandoned, GUID-named partial transfers after an interrupted run.
+    /// Never deletes persisted update metadata or a completed installer.
+    /// Files locked by an active downloader are left untouched.
+    /// </summary>
+    internal void CleanupAbandonedDownloads()
+    {
+        try
+        {
+            if (!Directory.Exists(_cacheDirectory))
+                return;
+
+            foreach (string path in Directory.EnumerateFiles(_cacheDirectory, "*.download",
+                         SearchOption.TopDirectoryOnly))
+            {
+                string name = Path.GetFileName(path);
+                // UpdateDownloader uses exactly .{32-character-hex-guid}.download.
+                if (name.Length != 42 || name[0] != '.' ||
+                    !name.EndsWith(".download", StringComparison.Ordinal) ||
+                    !name.Skip(1).Take(32).All(Uri.IsHexDigit))
+                    continue;
+
+                try
+                {
+                    if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                        continue;
+
+                    // FileShare.None in the downloader prevents deleting an active transfer.
+                    using (FileStream probe = new(path, FileMode.Open, FileAccess.Read,
+                               FileShare.None)) { }
+                    TryDeleteFile(path);
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
     internal static string GetInstallerFileName(ReleaseVersion version) =>
         InstallerPrefix + version + InstallerSuffix;
 

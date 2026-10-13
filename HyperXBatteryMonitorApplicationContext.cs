@@ -25,6 +25,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
     private readonly AppSettings _settings;
     private readonly NotificationService _notificationService;
     private readonly UpdateCoordinator _updateCoordinator;
+    private readonly Control _toastActivationDispatcher = new();
     private readonly BatteryRemainingTimeEstimator _batteryRemainingTimeEstimator;
 
     private Icon? _currentApplicationIcon;
@@ -70,6 +71,11 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         _notifyIcon.MouseUp += NotifyIcon_MouseUp;
         SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
 
+        // Toast activation arrives on a background thread, including on cold launch.
+        // The hidden WinForms control marshals all Settings navigation to the UI thread.
+        _ = _toastActivationDispatcher.Handle;
+        UpdateNotificationService.OpenAboutRequested += OnUpdateToastActivated;
+
         ApplyLocalization();
         ApplyTheme();
         UpdateTrayIcon();
@@ -84,6 +90,8 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
             _batteryMonitor.Start();
 
         _updateCoordinator.Start();
+        if (UpdateNotificationService.ConsumePendingOpenAbout())
+            OnUpdateToastActivated();
     }
 
     private void InitializeSelectedDevice()
@@ -293,6 +301,29 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         _settingsForm.Show();
         _settingsForm.BringToFront();
         _settingsForm.Activate();
+    }
+
+    private void OnUpdateToastActivated()
+    {
+        if (_toastActivationDispatcher.IsDisposed || !_toastActivationDispatcher.IsHandleCreated)
+            return;
+
+        try
+        {
+            _toastActivationDispatcher.BeginInvoke((MethodInvoker)(() =>
+            {
+                if (_toastActivationDispatcher.IsDisposed)
+                    return;
+
+                UpdateNotificationService.ConsumePendingOpenAbout();
+                ShowSettings(null, EventArgs.Empty);
+                _settingsForm?.NavigateToAbout();
+            }));
+        }
+        catch (InvalidOperationException)
+        {
+            // Ignore activations racing with normal application shutdown.
+        }
     }
 
     private void SettingsForm_FormClosed(object? sender, FormClosedEventArgs e)
@@ -1445,6 +1476,8 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
 
     protected override void ExitThreadCore()
     {
+        UpdateNotificationService.OpenAboutRequested -= OnUpdateToastActivated;
+        _toastActivationDispatcher.Dispose();
         _updateCoordinator.Dispose();
         _settingsForm?.Close();
         _blinkTimer?.Stop();

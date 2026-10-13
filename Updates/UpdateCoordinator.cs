@@ -81,6 +81,8 @@ internal sealed class UpdateCoordinator : IDisposable
         if (_started || _disposed || _storeManaged)
             return;
         _started = true;
+        // Remove incomplete transfer files left by a previous hard termination.
+        _store.CleanupAbandonedDownloads();
         _checkTimer?.Change(CheckInterval, CheckInterval);
         _ = CheckAsync(false, startup: true);
     }

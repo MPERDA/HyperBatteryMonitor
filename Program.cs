@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using HyperXBatteryTray.Settings;
+using HyperXBatteryTray.Updates;
 
 namespace HyperXBatteryTray;
 
@@ -78,6 +79,7 @@ internal static class Program
             ApplicationRuntime.MutexName);
 
         ApplicationConfiguration.Initialize();
+        UpdateNotificationService.RegisterActivation();
         Application.Run(
             new HyperXBatteryMonitorApplicationContext());
 
