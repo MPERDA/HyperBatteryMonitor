@@ -344,11 +344,8 @@ Special thanks to the following people and projects for their contributions to t
 
 - sladkOy — for the suggestion and help with the Ukrainian translation.
 
-
-
-## Downloads
+# Downloads
 
 [![Stable](https://img.shields.io/github/v/release/davidsantanaalves/HyperBatteryMonitor?label=Stable&color=green)](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases/latest)
 
-[![Beta](https://img.shields.io/github/v/release/davidsantanaalves/HyperBatteryMonitor?include_prereleases=true&filter=*beta*&sort=date&label=Beta&color=orange)](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases?q=prerelease%3Atrue+beta)
-
+[![Beta](https://img.shields.io/github/v/release/davidsantanaalves/HyperBatteryMonitor?include_prereleases&filter=*beta*&sort=date&label=Beta&color=orange)](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases?q=prerelease%3Atrue)
