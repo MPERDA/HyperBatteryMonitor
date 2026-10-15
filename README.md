@@ -160,10 +160,6 @@ These screenshots illustrate earlier versions.
 
 Download the latest version from the **Releases** section of this repository.
 
-For version 2.3.1, download:
-
-[HyperBatteryMonitor-Setup-v2.3.1.exe](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases/download/v2.3.1/HyperBatteryMonitor-Setup-v2.3.1.exe)
-
 Run the installer and follow the installation instructions.
 
 After installation, HyperX Battery Monitor runs in the Windows system tray.
@@ -347,3 +343,10 @@ Special thanks to the following people and projects for their contributions to t
 - minoga11 — for active participation in testing and for suggesting new improvements.
 
 - sladkOy — for the suggestion and help with the Ukrainian translation.
+
+
+## Downloads
+
+[![Stable](https://img.shields.io/github/v/release/davidsantanaalves/HyperXBatteryTray?label=Stable&color=green)](https://github.com/davidsantanaalves/HyperXBatteryTray/releases/latest)
+
+[![Beta](https://img.shields.io/github/v/release/davidsantanaalves/HyperXBatteryTray?include_prereleases=true&filter=*beta*&sort=date&label=Beta&color=orange)](https://github.com/davidsantanaalves/HyperXBatteryTray/releases)
