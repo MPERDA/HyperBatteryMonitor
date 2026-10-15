@@ -87,7 +87,7 @@ The same information is also available from the system tray context menu and too
 
 ## Supported Devices
 
-Ten headset models are currently supported. Feature availability is shown below.
+Ten established headset models and nine additional receiver/model variants are registered in version 2.4.0. The additional variants below are based on NGENUITY 3.1.0 static protocol research and require real-device validation during Beta testing.
 
 ### Feature availability
 
@@ -103,10 +103,25 @@ Ten headset models are currently supported. Feature availability is shown below.
 | HyperX Cloud Stinger Core Wireless + 7.1 | ✅ | ✅ | ⛔ |
 | HyperX Cloud Flight 2 **(Dedicated Dongle)** | ✅ | ✅ | ✅ |
 | HyperX Cloud Mix 2 | ✅ | ⛔ | ✅ |
+| HyperX Cloud III (Receiver 0FCC) | ✅ | ✅ | ✅ |
+| HyperX Cloud III S (Receiver 02CC) | ✅ | ✅ | ✅ |
+| HyperX Cloud Alpha 2 Wireless | ✅ | ✅ | ✅ |
+| HyperX Cloud Stinger 3 Wireless (PC) | ✅ | ⚠️ Notification-dependent | ✅ |
+| HyperX Cloud Stinger 3 Wireless (PlayStation) | ✅ | ⚠️ Notification-dependent | ✅ |
+| HyperX Cloud Stinger 3 Wireless (Xbox) | ✅ | ⚠️ Notification-dependent | ✅ |
+| HyperX Cloud Flight 2 (Xbox) | ✅ | ✅ | ✅ |
+| HyperX Cloud III S (TIO - Three-In-One) | ✅ | ✅ | ✅ |
+| HyperX Cloud Flight 2 (TIO - Three-In-One) | ✅ | ✅ | ✅ |
 
-**Cloud III S and Cloud Flight 2 require their Dedicated Dongle.** HyperX Three-In-One (TIO) receiver presence is detected only to explain that this connection is not yet supported for monitoring.
+**Existing dedicated-dongle drivers remain unchanged.** Separate entries are provided for new dedicated receivers and for the Cloud III S / Cloud Flight 2 through the HyperX Three-In-One (TIO) receiver. TIO models are resolved through the shared receiver slot table and monitored one at a time. Other TIO child models are not included. The initial hardware validation of these additions is pending; report incompatibilities through the issue tracker.
 
-Cloud Mix 2 supports battery and microphone mute monitoring; charging-state monitoring is unavailable.
+Cloud Mix 2 supports battery and microphone mute monitoring over its USB receiver; charging-state monitoring is unavailable.
+
+### Bluetooth battery fallback (Windows)
+
+When a paired Bluetooth headset is actively connected and Windows exposes a valid battery level, HBM can monitor its battery without a USB receiver. This is a read-only **fallback** for Cloud III S, Cloud Alpha 2, Cloud Flight 2, Cloud Stinger 3 and Cloud MIX 2. The original USB HID protocols retain priority and have not been changed. No setting or separate Bluetooth headset entry is required.
+
+Bluetooth reads use Windows device battery properties, falling back to the standard Bluetooth LE Battery Service when present. The feature does **not** claim that all headset firmware/Windows Bluetooth adapters expose the battery level. Unknown or unavailable values are shown as disconnected/N/A; no percentages are guessed. Bluetooth microphone mute, charging state and remaining-runtime estimates are unavailable unless independently implemented and validated. When switching from Bluetooth back to a USB receiver, HBM periodically checks whether HID can return a valid headset battery value (15-second recovery interval while Bluetooth is active), then automatically promotes the USB receiver. A present dongle with no responding headset is never enough to switch. HID-to-Bluetooth fallback requires two failed HID battery readings and an independently valid Windows Bluetooth battery result. When a TIO child changes slots, monitoring invalidates the old routing and re-reads the mode table before using the new slot. Ambiguous same-model child matches are rejected. Bluetooth support and the TIO slot transitions require real-device testing before a release can claim hardware compatibility.
 
 ## Requirements
 

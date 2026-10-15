@@ -186,14 +186,15 @@ public sealed partial class SettingsForm : Form
 
         string selectedDevice = _deviceSelector?.SelectedDeviceName ?? string.Empty;
         bool selected = !string.IsNullOrWhiteSpace(selectedDevice);
+        bool usingBluetooth = _device is BluetoothFallbackDevice bluetooth && bluetooth.IsUsingBluetooth;
 
         _batteryCapabilityIcon.IconKey = selected ? "supported" : "unsupported";
         _chargingCapabilityIcon.IconKey =
-            selected && HyperXDeviceManager.SupportsChargingMonitoring(selectedDevice)
+            selected && !usingBluetooth && HyperXDeviceManager.SupportsChargingMonitoring(selectedDevice)
                 ? "supported"
                 : "unsupported";
         _microphoneCapabilityIcon.IconKey =
-            selected && HyperXDeviceManager.SupportsMicrophoneMuteMonitoring(selectedDevice)
+            selected && !usingBluetooth && HyperXDeviceManager.SupportsMicrophoneMuteMonitoring(selectedDevice)
                 ? "supported"
                 : "unsupported";
     }

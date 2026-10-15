@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Por favor, mantenha o fone ligado e conectado durante a detecção.",
   "AutoDetectionNoDevice": "Nenhum dispositivo compatível foi detectado, por favor selecione seu dispositivo manualmente.",
   "AutoDetectionMultipleDevices": "Mais de um dispositivo compatível foi detectado, por favor selecione o dispositivo desejado manualmente.",
-  "AutoDetectionUnsupportedReceiver": "Receiver HyperX Three-In-One detectado. Este tipo de conexão ainda não é suportado. Para Cloud III S ou Cloud Flight 2, use o dongle dedicado.",
+  "AutoDetectionUnsupportedReceiver": "Receptor HyperX Three-In-One detectado, mas nenhum headset compatível respondeu. Verifique o pareamento e a alimentação ou selecione o headset manualmente.",
   "DedicatedDongleDeviceFormat": "{0} (Dongle Dedicado)",
   "Connected": "Conectado",
   "Disconnected": "Desconectado",

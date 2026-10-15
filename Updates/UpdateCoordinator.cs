@@ -1,4 +1,3 @@
-using System.Reflection;
 using HyperXBatteryTray.Settings;
 
 namespace HyperXBatteryTray.Updates;
@@ -62,9 +61,7 @@ internal sealed class UpdateCoordinator : IDisposable
         _lifetimeToken = _shutdown.Token;
         _downloader = new UpdateDownloader(_store);
         _storeManaged = WindowsPackageDetector.IsPackaged();
-        string? infoVersion = Assembly.GetEntryAssembly()?
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        _installedVersion = infoVersion?.Split('+')[0] ?? Application.ProductVersion.Split('+')[0];
+        _installedVersion = AppReleaseInfo.SemanticVersion;
         _snapshot = new UpdateSnapshot(_storeManaged ? UpdateStatus.StoreManaged : UpdateStatus.Idle);
 
         if (!_storeManaged)

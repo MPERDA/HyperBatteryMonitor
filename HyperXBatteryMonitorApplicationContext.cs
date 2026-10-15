@@ -469,7 +469,7 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         bool selected = !string.IsNullOrWhiteSpace(_settings.SelectedDevice);
         string deviceName = selected
             ? Localization.DeviceDisplayName(
-                NormalizeDeviceName(_settings.SelectedDevice),
+                HyperXDeviceManager.GetSelectionModelName(_settings.SelectedDevice),
                 _settings.Language)
             : L("UnknownHeadphones");
         string battery;
@@ -518,10 +518,13 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
         int battery = _device?.Battery ?? -1;
         bool connected = _device?.IsConnected == true;
 
+        // Bluetooth runtime percentages must not contaminate the historical HID
+        // discharge model: nominal battery life differs between transports.
+        bool isBluetooth = _device is BluetoothFallbackDevice fallback && fallback.IsUsingBluetooth;
         bool historyChanged = _batteryRemainingTimeEstimator.Observe(
             _settings.SelectedDevice,
             battery,
-            connected,
+            connected && !isBluetooth,
             _isCharging);
 
         if (historyChanged)
@@ -543,11 +546,13 @@ public sealed class HyperXBatteryMonitorApplicationContext : ApplicationContext
     }
 
     private TimeSpan? GetCurrentBatteryRemainingTime() =>
-        _batteryRemainingTimeEstimator.EstimateRemaining(
-            _settings.SelectedDevice,
-            _device?.Battery ?? -1,
-            _device?.IsConnected == true,
-            _isCharging);
+        _device is BluetoothFallbackDevice fallback && fallback.IsUsingBluetooth
+            ? null
+            : _batteryRemainingTimeEstimator.EstimateRemaining(
+                _settings.SelectedDevice,
+                _device?.Battery ?? -1,
+                _device?.IsConnected == true,
+                _isCharging);
 
     private static string NormalizeDeviceName(string value) =>
         HyperXDeviceManager.NormalizeSupportedDeviceName(value);

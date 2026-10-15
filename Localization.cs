@@ -124,6 +124,15 @@ public static class Localization
 
         string canonicalName = HyperXDeviceManager.NormalizeSupportedDeviceName(deviceName);
 
+        // Keep the persisted device identity unchanged; simplify only the user-visible label.
+        // Hide connection-specific suffixes without changing persisted device identity.
+        if (string.Equals(canonicalName, "HyperX Cloud Alpha 2 Wireless", StringComparison.OrdinalIgnoreCase))
+            return "HyperX Cloud Alpha 2";
+        if (string.Equals(canonicalName, "HyperX Cloud Stinger 3 Wireless", StringComparison.OrdinalIgnoreCase))
+            return "HyperX Cloud Stinger 3";
+        if (string.Equals(canonicalName, "HyperX Cloud Stinger Core Wireless + 7.1", StringComparison.OrdinalIgnoreCase))
+            return "HyperX Cloud Stinger Core + 7.1";
+
         return HyperXDeviceManager.RequiresDedicatedDongle(canonicalName)
             ? string.Format(Get("DedicatedDongleDeviceFormat", language), canonicalName)
             : canonicalName;

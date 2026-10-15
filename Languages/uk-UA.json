@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Під час пошуку гарнітура має бути увімкнена та підключена.",
   "AutoDetectionNoDevice": "Не вдалося знайти сумісний пристрій. Виберіть його вручну.",
   "AutoDetectionMultipleDevices": "Знайдено кілька сумісних пристроїв. Виберіть потрібний вручну.",
-  "AutoDetectionUnsupportedReceiver": "Виявлено приймач HyperX Three-In-One. Цей тип підключення поки не підтримується. Для Cloud III S або Cloud Flight 2 використовуйте окремий USB-адаптер.",
+  "AutoDetectionUnsupportedReceiver": "Виявлено приймач HyperX Three-In-One, але сумісна гарнітура не відповідає. Перевірте підключення та живлення або виберіть гарнітуру вручну.",
   "DedicatedDongleDeviceFormat": "{0} (окремий USB-адаптер)",
   "Connected": "Підключено",
   "Disconnected": "Відключено",

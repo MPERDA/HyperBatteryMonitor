@@ -14,8 +14,8 @@ namespace HyperXBatteryTray.Settings;
 public sealed partial class SettingsForm : Form
 {
     private const int AboutActionGapLogicalWidth = 10;
-    private const int AboutLegalCardLogicalHeight = 92;
-    private const int AboutSectionBottomMarginLogicalHeight = 10;
+    private const int AboutLegalCardLogicalHeight = 88;
+    private const int AboutSectionBottomMarginLogicalHeight = 6;
 
     private void ShowAboutPage()
     {
@@ -50,16 +50,13 @@ public sealed partial class SettingsForm : Form
         catch { }
         identityLayout.Controls.Add(logo, 0, 0);
         TableLayoutPanel identityText = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent };
-        identityText.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(30))); identityText.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(22))); identityText.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        identityText.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(29))); identityText.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(19))); identityText.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         identityText.Controls.Add(new Label { Text = Application.ProductName, Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 15f), ForeColor = foreground, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-        identityText.Controls.Add(new Label { Text = string.Format(L("AboutVersion"), Application.ProductVersion.Split('+')[0]), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 8.5f), ForeColor = secondary, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
+        identityText.Controls.Add(new Label { Text = string.Format(L("AboutVersion"), AppReleaseInfo.DisplayVersion), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 8.5f), ForeColor = secondary, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
         identityText.Controls.Add(new Label { Text = L("AboutTagline"), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), ForeColor = foreground, BackColor = Color.Transparent, TextAlign = ContentAlignment.TopLeft }, 0, 2);
         identityLayout.Controls.Add(identityText, 1, 0);
         identity.Controls.Add(identityLayout);
-        AddResponsiveRow(identity, 82);
-
-        Label description = new() { Text = L("AboutDescription"), Dock = DockStyle.Fill, AutoSize = false, Font = new Font("Segoe UI", 8.5f), ForeColor = secondary, BackColor = Color.Transparent, TextAlign = ContentAlignment.TopLeft };
-        AddResponsiveRow(description, 48);
+        AddResponsiveRow(identity, 80, 0);
 
         TableLayoutPanel actions = new()
         {
@@ -91,19 +88,27 @@ public sealed partial class SettingsForm : Form
             button.Margin = ScaleUiPadding(0, 0, i < actionButtons.Length - 1 ? AboutActionGapLogicalWidth : 0, 0);
             actions.Controls.Add(button, i, 0);
         }
-        AddResponsiveRow(actions, 48, 0);
+        AddResponsiveRow(actions, 42, 6);
 
-        Panel separator = new() { Dock = DockStyle.Fill, Height = ScaleUi(1), BackColor = dark ? DarkBorder : LightBorder, Margin = ScaleUiPadding(0, 0, 0, 8) };
-        AddResponsiveRow(separator, 9);
+        // A narrow separator row restores breathing room between the link buttons and Legal.
+        Panel separatorRow = new() { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+        separatorRow.Controls.Add(new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = ScaleUi(1),
+            Margin = ScaleUiPadding(0, 3, 0, 0),
+            BackColor = dark ? DarkBorder : LightBorder
+        });
+        AddResponsiveRow(separatorRow, 6, 0);
 
         RoundedPanel legalCard = CreateResponsiveCard(AboutLegalCardLogicalHeight);
         AddResponsiveRow(
             legalCard,
             AboutLegalCardLogicalHeight + AboutSectionBottomMarginLogicalHeight,
             AboutSectionBottomMarginLogicalHeight);
-        TableLayoutPanel legal = new() { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3, Padding = ScaleUiPadding(12, 8, 12, 8), BackColor = Color.Transparent };
+        TableLayoutPanel legal = new() { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3, Padding = ScaleUiPadding(12, 6, 12, 6), BackColor = Color.Transparent };
         legal.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ScaleUi(30))); legal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        legal.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(StandardUiIconLogicalSize))); legal.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); legal.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(20)));
+        legal.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(StandardUiIconLogicalSize))); legal.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); legal.RowStyles.Add(new RowStyle(SizeType.Absolute, ScaleUi(18)));
         legalCard.Controls.Add(legal);
         legal.Controls.Add(CreateTableIcon("legal", StandardUiIconLogicalSize), 0, 0);
         Label legalTitle = new() { Text = L("AboutLegalTitle"), Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 9f), ForeColor = foreground, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft };

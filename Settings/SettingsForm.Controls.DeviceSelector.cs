@@ -59,7 +59,9 @@ public sealed partial class SettingsForm : Form
                 {
                     for (int i = 0; i < _options.Count; i++)
                     {
-                        if (HyperXDeviceManager.IsSameDevice(_options[i].Name, value))
+                        if (string.Equals(_options[i].Name,
+                            HyperXDeviceManager.GetSelectionModelName(value),
+                            StringComparison.OrdinalIgnoreCase))
                         {
                             index = i + 1;
                             break;
@@ -111,7 +113,9 @@ public sealed partial class SettingsForm : Form
                 new("HyperX Cloud Flight Wireless", Path.Combine(devicesPath, "cloudflightwireless.png")),
                 new("HyperX Cloud Stinger Core Wireless + 7.1", Path.Combine(devicesPath, "cloudstingercorewireless7.1.png")),
                 new("HyperX Cloud Flight 2", Path.Combine(devicesPath, "cloudflight2.png")),
-                new("HyperX Cloud Mix 2", Path.Combine(devicesPath, "cloudmix2.png"))
+                new("HyperX Cloud Mix 2", Path.Combine(devicesPath, "cloudmix2.png")),
+                new("HyperX Cloud Alpha 2 Wireless", Path.Combine(devicesPath, "cloudalpha2.png")),
+                new("HyperX Cloud Stinger 3 Wireless", Path.Combine(devicesPath, "cloudstinger3.png"))
             };
             _options.Sort((left, right) => StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name));
 
@@ -313,7 +317,6 @@ public sealed partial class SettingsForm : Form
             }
 
             ShowPopup();
-            _popup?.RefreshItems(_searchBox.Text);
             Invalidate();
         }
 
@@ -553,46 +556,48 @@ public sealed partial class SettingsForm : Form
                 const int itemHeight = 64;
                 const int maxVisibleItems = 3;
 
+                // The old AutoScrollPosition can otherwise offset every newly-created row,
+                // leaving an empty block above the first result after reopening the popup.
                 _list.SuspendLayout();
                 try
                 {
-                    foreach (Control c in _list.Controls)
-                        c.Dispose();
-                    _list.Controls.Clear();
+                    _list.AutoScroll = false;
+                    _list.AutoScrollMinSize = Size.Empty;
+                    _list.AutoScrollPosition = Point.Empty;
+                    foreach (Control control in _list.Controls.Cast<Control>().ToArray())
+                    {
+                        _list.Controls.Remove(control);
+                        control.Dispose();
+                    }
 
                     string normalized = query.Trim();
+                    int row = 0;
                     for (int i = 0; i < _options.Count; i++)
                     {
-                        string displayName = Localization.DeviceDisplayName(
-                            _options[i].Name,
-                            _language);
+                        string displayName = Localization.DeviceDisplayName(_options[i].Name, _language);
+                        if (!string.IsNullOrEmpty(normalized) &&
+                            !displayName.Contains(normalized, StringComparison.OrdinalIgnoreCase) &&
+                            !_options[i].Name.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+                            continue;
 
-                        if (string.IsNullOrEmpty(normalized) ||
-                            displayName.Contains(normalized, StringComparison.OrdinalIgnoreCase) ||
-                            _options[i].Name.Contains(normalized, StringComparison.OrdinalIgnoreCase))
-                        {
-                            _list.Controls.Add(CreateItem(
-                                i + 1,
-                                displayName,
-                                _options[i].ImagePath));
-                        }
+                        Control item = CreateItem(i + 1, displayName, _options[i].ImagePath);
+                        item.Location = new Point(0, row * itemHeight);
+                        _list.Controls.Add(item);
+                        row++;
                     }
 
-                    int itemCount = _list.Controls.Count;
-                    int visibleItems = Math.Max(1, Math.Min(itemCount, maxVisibleItems));
-                    Height = visibleItems * itemHeight + 2;
-
-                    int availableWidth = Math.Max(1, _list.ClientSize.Width);
-                    foreach (Control item in _list.Controls)
-                    {
-                        item.Width = availableWidth;
-                        item.Location = new Point(0, item.Top);
-                    }
-
-                    _list.AutoScrollMinSize = new Size(0, itemCount * itemHeight);
+                    Height = Math.Max(1, Math.Min(row, maxVisibleItems)) * itemHeight + 2;
+                    _list.AutoScroll = true;
+                    _list.AutoScrollMinSize = new Size(0, row * itemHeight);
                     _list.PerformLayout();
-                    foreach (Control item in _list.Controls)
-                        item.Width = Math.Max(1, _list.ClientSize.Width);
+                    _list.AutoScrollPosition = Point.Empty;
+                    int availableWidth = Math.Max(1, _list.ClientSize.Width);
+                    for (int i = 0; i < _list.Controls.Count; i++)
+                    {
+                        Control item = _list.Controls[i];
+                        item.Location = new Point(0, i * itemHeight);
+                        item.Width = availableWidth;
+                    }
                 }
                 finally
                 {

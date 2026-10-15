@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Mantén el auricular encendido y conectado durante la detección.",
   "AutoDetectionNoDevice": "No se detectó ningún dispositivo compatible. Selecciona tu dispositivo manualmente.",
   "AutoDetectionMultipleDevices": "Se detectó más de un dispositivo compatible. Selecciona manualmente el dispositivo deseado.",
-  "AutoDetectionUnsupportedReceiver": "Receptor HyperX Three-In-One detectado. Este tipo de conexión aún no es compatible. Para Cloud III S o Cloud Flight 2, usa el dongle dedicado.",
+  "AutoDetectionUnsupportedReceiver": "Se detectó un receptor HyperX Three-In-One, pero ningún auricular compatible respondió. Comprueba el emparejamiento y la alimentación o selecciona el dispositivo manualmente.",
   "DedicatedDongleDeviceFormat": "{0} (Dongle dedicado)",
   "Connected": "Conectado",
   "Disconnected": "Desconectado",

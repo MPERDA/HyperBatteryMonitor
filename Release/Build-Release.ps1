@@ -36,17 +36,45 @@ if ($versionParts.Count -ne 4 -or @($versionParts | Where-Object { $_ -lt 0 -or 
 }
 
 $numericVersion = ($versionParts -join '.')
+
+$channelNodes = @(
+    $projectXml.Project.PropertyGroup |
+        ForEach-Object { $_.ReleaseChannel } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+)
+if ($channelNodes.Count -ne 1) {
+    throw "Expected exactly one <ReleaseChannel> property in $project."
+}
+$releaseChannel = ([string]$channelNodes[0]).Trim()
+if ($releaseChannel -cnotin @('Stable', 'Beta')) {
+    throw "Invalid ReleaseChannel '$releaseChannel'. Expected Stable or Beta."
+}
+
 $releaseVersion = $baseVersion
-if ($PSBoundParameters.ContainsKey('Prerelease')) {
+if ($releaseChannel -ceq 'Beta') {
+    $betaNodes = @(
+        $projectXml.Project.PropertyGroup |
+            ForEach-Object { $_.BetaNumber } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+    )
+    if ($betaNodes.Count -ne 1) {
+        throw "Expected exactly one <BetaNumber> property in $project."
+    }
+    $betaNumber = ([string]$betaNodes[0]).Trim()
+    if ($betaNumber -cnotmatch '^[1-9][0-9]*$') {
+        throw "Invalid BetaNumber '$betaNumber'. Use 1, 2, 3, ... without leading zeros."
+    }
     if ($baseVersion.Split('.').Count -ne 3) {
-        throw 'Prerelease builds require a three-part SemVer base version.'
+        throw 'Beta builds require a three-part SemVer base version.'
     }
-    if ([string]::IsNullOrWhiteSpace($Prerelease) -or
-        $Prerelease -cnotmatch '^[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*$' -or
-        @($Prerelease.Split('.') | Where-Object { $_ -match '^0[0-9]+$' }).Count -ne 0) {
-        throw "Invalid SemVer prerelease identifier '$Prerelease'. Use identifiers such as beta.1 or rc.1."
-    }
-    $releaseVersion = "$baseVersion-$Prerelease"
+    $releaseVersion = "$baseVersion-beta.$betaNumber"
+}
+
+# Preserve the historical -Prerelease option as a consistency check only.
+# It must not override the .csproj source of truth.
+if ($PSBoundParameters.ContainsKey('Prerelease') -and
+    "$baseVersion-$Prerelease" -cne $releaseVersion) {
+    throw "-Prerelease '$Prerelease' conflicts with ReleaseChannel/BetaNumber in the .csproj ($releaseVersion)."
 }
 
 $storePackageVersion = $numericVersion
@@ -60,7 +88,7 @@ New-Item -ItemType Directory -Force -Path $release | Out-Null
 
 Write-Host "Publishing Hyper Battery Monitor $releaseVersion..." -ForegroundColor Cyan
 $versionProperties = @(
-    "-p:Version=$releaseVersion",
+    "-p:Version=$baseVersion",
     "-p:InformationalVersion=$releaseVersion",
     "-p:AssemblyVersion=$numericVersion",
     "-p:FileVersion=$numericVersion",
@@ -173,7 +201,7 @@ if ($BuildStorePackage) {
         # Rebuild to prevent cached upload manifests from retaining a previous release version.
         # AppxPackageVersion is passed explicitly as an additional guard so MSBuild and the
         # manifest agree on the exact version being packaged.
-        & $msbuild $packageProject /restore /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:SolutionDir="$root\" /p:AppxPackageVersion=$storePackageVersion /p:Version=$releaseVersion /p:InformationalVersion=$releaseVersion /p:AssemblyVersion=$numericVersion /p:FileVersion=$numericVersion /p:IncludeSourceRevisionInInformationalVersion=false
+        & $msbuild $packageProject /restore /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:SolutionDir="$root\" /p:AppxPackageVersion=$storePackageVersion /p:Version=$baseVersion /p:InformationalVersion=$releaseVersion /p:AssemblyVersion=$numericVersion /p:FileVersion=$numericVersion /p:IncludeSourceRevisionInInformationalVersion=false
         if ($LASTEXITCODE -ne 0) {
             throw "Store package build failed with exit code $LASTEXITCODE."
         }

@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "감지 중에는 헤드셋의 전원을 켜고 연결된 상태로 유지하세요.",
   "AutoDetectionNoDevice": "호환 장치를 감지하지 못했습니다. 장치를 수동으로 선택하세요.",
   "AutoDetectionMultipleDevices": "호환 장치가 두 개 이상 감지되었습니다. 사용할 장치를 수동으로 선택하세요.",
-  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One 수신기가 감지되었습니다. 이 연결 방식은 아직 지원되지 않습니다. Cloud III S 또는 Cloud Flight 2에서는 전용 동글을 사용하세요.",
+  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One 수신기가 감지되었지만 호환 헤드셋이 응답하지 않습니다. 페어링과 전원을 확인하거나 헤드셋을 수동으로 선택하세요.",
   "DedicatedDongleDeviceFormat": "{0} (전용 동글)",
   "Connected": "연결됨",
   "Disconnected": "연결 끊김",

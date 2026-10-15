@@ -47,5 +47,7 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <!-- Required for read-only Bluetooth LE GATT battery queries in MSIX. -->
+    <DeviceCapability Name="bluetooth" />
   </Capabilities>
 </Package>

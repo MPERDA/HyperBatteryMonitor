@@ -60,7 +60,8 @@ public sealed class AppSettings
     public AppLanguage Language { get; set; } = AppLanguage.English;
     public AppTheme Theme { get; set; } = AppTheme.System;
     public bool ThemeConfigured { get; set; }
-    public UpdateChannelEnum UpdateChannel { get; set; } = UpdateChannelEnum.Stable;
+    public UpdateChannelEnum UpdateChannel { get; set; } = AppReleaseInfo.DefaultUpdateChannel;
+    public bool UpdateChannelUserSelected { get; set; }
     public UpdateDownloadModeEnum UpdateDownloadMode { get; set; } = UpdateDownloadModeEnum.NotifyBeforeDownload;
 
     public static AppSettings CreateDefault()
@@ -81,7 +82,8 @@ public sealed class AppSettings
             Language = AppLanguage.English,
             Theme = AppTheme.System,
             ThemeConfigured = false,
-            UpdateChannel = UpdateChannelEnum.Stable,
+            UpdateChannel = AppReleaseInfo.DefaultUpdateChannel,
+            UpdateChannelUserSelected = false,
             UpdateDownloadMode = UpdateDownloadModeEnum.NotifyBeforeDownload
         };
     }

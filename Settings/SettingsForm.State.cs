@@ -97,7 +97,7 @@ public sealed partial class SettingsForm : Form
         if (_footer != null) _footer.BackColor = background;
         _versionLabel.ForeColor = secondary;
         _applicationNameLabel.ForeColor = foreground;
-        _versionLabel.Text = "v" + Application.ProductVersion.Split('+')[0];
+        _versionLabel.Text = "v " + AppReleaseInfo.DisplayVersion;
 
         Icon = LoadApplicationIcon();
         WarmUpIcons();
@@ -341,6 +341,7 @@ public sealed partial class SettingsForm : Form
         AppSettings defaults = AppSettings.CreateDefault();
         _pendingSelectedDevice = defaults.SelectedDevice;
         _pendingUpdateChannel = defaults.UpdateChannel;
+        _pendingUpdateChannelUserSelected = false;
         _pendingUpdateDownloadMode = defaults.UpdateDownloadMode;
         _pendingStartupEnabled = !ApplicationRuntime.IsTestMode &&
             AppSettings.DefaultStartWithWindows;
@@ -393,6 +394,7 @@ public sealed partial class SettingsForm : Form
     {
         _settings.SelectedDevice = _pendingSelectedDevice;
         _settings.UpdateChannel = _pendingUpdateChannel;
+        _settings.UpdateChannelUserSelected = _pendingUpdateChannelUserSelected;
         _settings.UpdateDownloadMode = _pendingUpdateDownloadMode;
         _settings.DisplayMode = _pendingDisplayMode;
         _settings.AdvancedDisplayMode = _pendingAdvancedDisplayMode;
@@ -490,7 +492,7 @@ public sealed partial class SettingsForm : Form
     private string GetWindowTitle() => ApplicationRuntime.TestIndicator + string.Format(
         L("WindowTitle"),
         Application.ProductName,
-        Application.ProductVersion.Split('+')[0]);
+        AppReleaseInfo.DisplayVersion);
 
     private string L(string key) => Localization.Get(key, _selectedLanguage);
     private AppTheme EffectiveTheme => ResolveTheme(_selectedTheme);

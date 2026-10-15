@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Gardez le casque allumé et connecté pendant la détection.",
   "AutoDetectionNoDevice": "Aucun périphérique compatible n'a été détecté. Sélectionnez votre périphérique manuellement.",
   "AutoDetectionMultipleDevices": "Plusieurs périphériques compatibles ont été détectés. Sélectionnez manuellement celui que vous souhaitez utiliser.",
-  "AutoDetectionUnsupportedReceiver": "Récepteur HyperX Three-In-One détecté. Ce type de connexion n'est pas encore pris en charge. Pour le Cloud III S ou le Cloud Flight 2, utilisez le dongle dédié.",
+  "AutoDetectionUnsupportedReceiver": "Récepteur HyperX Three-In-One détecté, mais aucun casque compatible ne répond. Vérifiez l’appairage et l’alimentation ou sélectionnez le casque manuellement.",
   "DedicatedDongleDeviceFormat": "{0} (dongle dédié)",
   "Connected": "Connecté",
   "Disconnected": "Déconnecté",

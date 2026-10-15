@@ -18,6 +18,7 @@ public sealed partial class SettingsForm : Form
     private readonly UpdateCoordinator? _updateCoordinator;
     private readonly Func<Task<bool>>? _installDownloadedUpdateAsync;
     private UpdateChannel _pendingUpdateChannel;
+    private bool _pendingUpdateChannelUserSelected;
     private UpdateDownloadMode _pendingUpdateDownloadMode;
     private readonly StartupManager _startupManager;
     private readonly PngIconCache _iconCache;
@@ -242,6 +243,7 @@ public sealed partial class SettingsForm : Form
         _updateCoordinator = updateCoordinator;
         _installDownloadedUpdateAsync = installDownloadedUpdateAsync;
         _pendingUpdateChannel = settings.UpdateChannel;
+        _pendingUpdateChannelUserSelected = settings.UpdateChannelUserSelected;
         _pendingUpdateDownloadMode = settings.UpdateDownloadMode;
         if (_updateCoordinator is not null)
             _updateCoordinator.Changed += OnUpdateStatusChanged;
@@ -255,7 +257,7 @@ public sealed partial class SettingsForm : Form
         _iconCache = new PngIconCache();
         _selectedLanguage = settings.Language;
         _selectedTheme = settings.Theme;
-        _pendingSelectedDevice = settings.SelectedDevice;
+        _pendingSelectedDevice = HyperXDeviceManager.GetSelectionModelName(settings.SelectedDevice);
         _pendingStartupEnabled = ApplicationRuntime.IsTestMode ? false :
             settings.IsNewSettingsProfile
                 ? AppSettings.DefaultStartWithWindows

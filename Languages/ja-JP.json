@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "検出中はヘッドセットの電源を入れ、接続したままにしてください。",
   "AutoDetectionNoDevice": "対応デバイスを検出できませんでした。デバイスを手動で選択してください。",
   "AutoDetectionMultipleDevices": "複数の対応デバイスが検出されました。使用するデバイスを手動で選択してください。",
-  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One レシーバーが検出されました。この接続方式はまだサポートされていません。Cloud III S または Cloud Flight 2 では専用ドングルを使用してください。",
+  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One レシーバーを検出しましたが、対応するヘッドセットが応答しません。ペアリングと電源を確認するか、手動で選択してください。",
   "DedicatedDongleDeviceFormat": "{0}（専用ドングル）",
   "Connected": "接続済み",
   "Disconnected": "未接続",

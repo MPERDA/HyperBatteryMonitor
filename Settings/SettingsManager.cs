@@ -86,6 +86,19 @@ public sealed class SettingsManager
             if (settings == null)
                 return AppSettings.CreateDefault();
 
+            // Older versions always saved UpdateChannel, even when it was just
+            // the default. We cannot identify an earlier manual choice, so
+            // preserve an existing legacy value rather than silently overwrite it.
+            using (JsonDocument document = JsonDocument.Parse(json))
+            {
+                if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                    !document.RootElement.TryGetProperty(nameof(AppSettings.UpdateChannelUserSelected), out _) &&
+                    document.RootElement.TryGetProperty(nameof(AppSettings.UpdateChannel), out _))
+                {
+                    settings.UpdateChannelUserSelected = true;
+                }
+            }
+
             Normalize(settings);
 
             return settings;
@@ -409,7 +422,10 @@ public sealed class SettingsManager
             settings.AdvancedDisplayMode = AdvancedDisplayMode.BatteryGradient;
 
         if (!Enum.IsDefined(settings.UpdateChannel))
-            settings.UpdateChannel = UpdateChannel.Stable;
+            settings.UpdateChannelUserSelected = false;
+
+        if (!settings.UpdateChannelUserSelected)
+            settings.UpdateChannel = AppReleaseInfo.DefaultUpdateChannel;
 
         if (!Enum.IsDefined(settings.UpdateDownloadMode))
             settings.UpdateDownloadMode = UpdateDownloadMode.NotifyBeforeDownload;

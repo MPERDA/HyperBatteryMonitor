@@ -4,13 +4,14 @@ namespace HyperXBatteryTray.Settings;
 
 public sealed partial class SettingsForm
 {
-    private const int AboutUpdatesCardLogicalHeight = 382;
+    private const int AboutUpdatesCardLogicalHeight = 204;
     private Label? _updatesStatusLabel;
-    private Button? _updatesCheckButton;
-    private Button? _updatesDownloadButton;
-    private Button? _updatesInstallButton;
-    private Button? _updatesLaterButton;
+    private ActionButton? _updatesCheckButton;
+    private ActionButton? _updatesDownloadButton;
+    private ActionButton? _updatesInstallButton;
+    private ActionButton? _updatesLaterButton;
     private ProgressBar? _updatesProgress;
+    private FlowLayoutPanel? _updatesActionRow;
     private bool _installLaunchInProgress;
 
     private void BuildAboutUpdatesCard()
@@ -20,15 +21,16 @@ public sealed partial class SettingsForm
         Color secondary = dark ? DarkSecondary : LightSecondary;
         bool store = _updateCoordinator?.IsStoreManaged ?? WindowsPackageDetector.IsPackaged();
 
-        int height = store ? 128 : AboutUpdatesCardLogicalHeight;
+        int height = store ? 96 : AboutUpdatesCardLogicalHeight;
         RoundedPanel card = CreateResponsiveCard(height);
-        AddResponsiveRow(card, height + AboutSectionBottomMarginLogicalHeight,
-            AboutSectionBottomMarginLogicalHeight);
+        // Last About section: no trailing margin is needed. Removing the unused
+        // 6px prevents the almost-full page from activating WinForms AutoScroll.
+        AddResponsiveRow(card, height, 0);
         TableLayoutPanel layout = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            Padding = ScaleUiPadding(14, 10, 14, 10),
+            Padding = ScaleUiPadding(14, 7, 14, 7),
             BackColor = Color.Transparent,
             Margin = new Padding(0)
         };
@@ -44,60 +46,83 @@ public sealed partial class SettingsForm
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ScaleUi(30)));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        header.Controls.Add(CreateTableIcon("notification", StandardUiIconLogicalSize), 0, 0);
+        // PngIconCache already supports dark_update / light_update asset names.
+        // Older source trees without the new files retain the previous icon.
+        string themePrefix = dark ? "dark" : "light";
+        string updateIconPath = AssetPaths.GetThemeIconPath(dark,
+            $"{themePrefix}_update-{StandardUiIconLogicalSize}x{StandardUiIconLogicalSize}.png");
+        header.Controls.Add(CreateTableIcon(File.Exists(updateIconPath) ? "update" : "notification",
+            StandardUiIconLogicalSize), 0, 0);
         header.Controls.Add(CreateUpdateLabel("UpdatesTitle", 9.5f, foreground, true), 1, 0);
-        AddUpdatesRow(layout, header, 30);
-        AddUpdatesRow(layout, CreateUpdateLabel("UpdatesDescription", 8f, secondary), 31);
+        AddUpdatesRow(layout, header, 24);
 
         if (store)
         {
-            AddUpdatesRow(layout, CreateUpdateLabel("UpdatesStoreManaged", 8.8f, secondary), 38);
+            AddUpdatesRow(layout, CreateUpdateLabel("UpdatesStoreManaged", 8.8f, secondary), 44);
             return;
         }
 
-        AddUpdatesRow(layout, CreateUpdateLabel("UpdatesChannel", 8.8f, foreground, true), 22);
+        // The redundant UpdatesDescription is omitted to keep the entire About
+        // page visible at the standard window size. Controls retain their labels.
+
+        AddUpdatesRow(layout, CreateUpdateLabel("UpdatesChannel", 8.8f, foreground, true), 18);
         TableLayoutPanel channelRow = CreateUpdatesOptionsRow();
         RadioButton stable = CreateUpdateRadio("UpdatesStable", _pendingUpdateChannel == UpdateChannel.Stable, foreground);
         RadioButton beta = CreateUpdateRadio("UpdatesBeta", _pendingUpdateChannel == UpdateChannel.Beta, foreground);
         channelRow.Controls.Add(stable, 0, 0);
         channelRow.Controls.Add(beta, 1, 0);
-        stable.CheckedChanged += (_, _) => { if (stable.Checked) { _pendingUpdateChannel = UpdateChannel.Stable; RefreshUpdatesUi(); } };
-        beta.CheckedChanged += (_, _) => { if (beta.Checked) { _pendingUpdateChannel = UpdateChannel.Beta; RefreshUpdatesUi(); } };
-        AddUpdatesRow(layout, channelRow, 32);
+        stable.CheckedChanged += (_, _) => { if (stable.Checked) { _pendingUpdateChannel = UpdateChannel.Stable; _pendingUpdateChannelUserSelected = true; RefreshUpdatesUi(); } };
+        beta.CheckedChanged += (_, _) => { if (beta.Checked) { _pendingUpdateChannel = UpdateChannel.Beta; _pendingUpdateChannelUserSelected = true; RefreshUpdatesUi(); } };
+        AddUpdatesRow(layout, channelRow, 24);
 
-        AddUpdatesRow(layout, CreateUpdateLabel("UpdatesPreference", 8.8f, foreground, true), 22);
+        AddUpdatesRow(layout, CreateUpdateLabel("UpdatesPreference", 8.8f, foreground, true), 18);
         RadioButton automatic = CreateUpdateRadio("UpdatesAutomatic", _pendingUpdateDownloadMode == UpdateDownloadMode.DownloadAutomatically, foreground);
         RadioButton notify = CreateUpdateRadio("UpdatesNotify", _pendingUpdateDownloadMode == UpdateDownloadMode.NotifyBeforeDownload, foreground);
-        // Separate rows require a common radio container to preserve mutual exclusion.
-        Panel modeGroup = new() { Dock = DockStyle.Fill, BackColor = Color.Transparent };
-        TableLayoutPanel modes = new() { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1, BackColor = Color.Transparent };
-        modes.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        modes.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        modes.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        modes.Controls.Add(automatic, 0, 0);
-        modes.Controls.Add(notify, 0, 1);
-        modeGroup.Controls.Add(modes);
+        // Reuse the release-channel layout: both options share one radio group.
+        TableLayoutPanel modeRow = CreateUpdatesOptionsRow();
+        modeRow.Controls.Add(automatic, 0, 0);
+        modeRow.Controls.Add(notify, 1, 0);
         automatic.CheckedChanged += (_, _) => { if (automatic.Checked) { _pendingUpdateDownloadMode = UpdateDownloadMode.DownloadAutomatically; RefreshUpdatesUi(); } };
         notify.CheckedChanged += (_, _) => { if (notify.Checked) { _pendingUpdateDownloadMode = UpdateDownloadMode.NotifyBeforeDownload; RefreshUpdatesUi(); } };
-        AddUpdatesRow(layout, modeGroup, 77);
+        AddUpdatesRow(layout, modeRow, 26);
 
         _updatesStatusLabel = CreateUpdateLabel("UpdatesIdle", 8.5f, secondary);
-        AddUpdatesRow(layout, _updatesStatusLabel, 48);
+        AddUpdatesRow(layout, _updatesStatusLabel, 32);
         _updatesProgress = new ProgressBar
         {
             Dock = DockStyle.Fill,
             Maximum = 100,
             Visible = false,
             Style = ProgressBarStyle.Continuous,
-            Margin = ScaleUiPadding(0, 3, 0, 5)
+            Margin = ScaleUiPadding(0, 1, 0, 1)
         };
-        AddUpdatesRow(layout, _updatesProgress, 16);
+        AddUpdatesRow(layout, _updatesProgress, 10);
 
-        TableLayoutPanel actions = CreateUpdatesOptionsRow();
+        // Use the existing ActionButton control and size each action to its text,
+        // instead of stretching Check for updates to 50% of the card width.
+        // Invisible actions do not reserve space; available actions flow together.
+        _updatesActionRow = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoScroll = false,
+            Padding = new Padding(0),
+            BackColor = Color.Transparent,
+            Margin = new Padding(0)
+        };
+        _updatesActionRow.SizeChanged += (_, _) => ResizeUpdateActionButtons();
+
         _updatesCheckButton = CreateUpdateButton("UpdatesCheck", dark);
         _updatesDownloadButton = CreateUpdateButton("UpdatesDownload", dark);
-        actions.Controls.Add(_updatesCheckButton, 0, 0);
-        actions.Controls.Add(_updatesDownloadButton, 1, 0);
+        _updatesInstallButton = CreateUpdateButton("UpdatesInstall", dark);
+        _updatesLaterButton = CreateUpdateButton("UpdatesLater", dark);
+
+        _updatesActionRow.Controls.Add(_updatesCheckButton);
+        _updatesActionRow.Controls.Add(_updatesDownloadButton);
+        _updatesActionRow.Controls.Add(_updatesInstallButton);
+        _updatesActionRow.Controls.Add(_updatesLaterButton);
+
         _updatesCheckButton.Click += async (_, _) =>
         {
             if (_updateCoordinator is not null)
@@ -108,20 +133,13 @@ public sealed partial class SettingsForm
             if (_updateCoordinator is not null)
                 await _updateCoordinator.DownloadAvailableAsync();
         };
-        AddUpdatesRow(layout, actions, 42);
-
-        TableLayoutPanel installActions = CreateUpdatesOptionsRow();
-        _updatesInstallButton = CreateUpdateButton("UpdatesInstall", dark);
-        _updatesLaterButton = CreateUpdateButton("UpdatesLater", dark);
-        installActions.Controls.Add(_updatesInstallButton, 0, 0);
-        installActions.Controls.Add(_updatesLaterButton, 1, 0);
         _updatesInstallButton.Click += async (_, _) => await InstallUpdateFromAboutAsync();
         _updatesLaterButton.Click += (_, _) =>
         {
             _updateCoordinator?.RemindLater();
             RefreshUpdatesUi();
         };
-        AddUpdatesRow(layout, installActions, 42);
+        AddUpdatesRow(layout, _updatesActionRow, 38);
 
         RefreshUpdatesUi();
     }
@@ -217,21 +235,58 @@ public sealed partial class SettingsForm
         UseCompatibleTextRendering = false
     };
 
-    private Button CreateUpdateButton(string key, bool dark)
+    private ActionButton CreateUpdateButton(string key, bool dark) => new(_iconCache)
     {
-        Button button = new()
+        Text = L(key),
+        Dock = DockStyle.None,
+        Size = ScaleUiSize(160, 32),
+        Margin = ScaleUiPadding(0, 2, 8, 2),
+        Font = new Font("Segoe UI", 8.3f),
+        DarkMode = dark,
+        Primary = false,
+        OutsideBackColor = dark ? Color.FromArgb(42, 45, 48) : Color.FromArgb(248, 249, 251)
+    };
+
+    private void ResizeUpdateActionButtons()
+    {
+        if (_updatesActionRow is null || _updatesActionRow.IsDisposed ||
+            _updatesCheckButton is null || _updatesDownloadButton is null ||
+            _updatesInstallButton is null || _updatesLaterButton is null ||
+            _updatesActionRow.ClientSize.Width <= 0)
+            return;
+
+        ActionButton[] buttons =
         {
-            Text = L(key),
-            Dock = DockStyle.Fill,
-            Margin = ScaleUiPadding(2, 3, 6, 3),
-            FlatStyle = FlatStyle.Flat,
-            BackColor = dark ? Color.FromArgb(55, 60, 66) : Color.FromArgb(238, 243, 249),
-            ForeColor = dark ? Color.WhiteSmoke : LightText,
-            Font = new Font("Segoe UI", 8.3f),
-            UseVisualStyleBackColor = false
+            _updatesCheckButton, _updatesDownloadButton,
+            _updatesInstallButton, _updatesLaterButton
         };
-        button.FlatAppearance.BorderColor = dark ? DarkBorder : LightBorder;
-        return button;
+        ActionButton[] visible = buttons
+            .Where(button => button is { IsDisposed: false, Visible: true })
+            .ToArray();
+        if (visible.Length == 0)
+            return;
+
+        int gap = ScaleUi(8);
+        int available = Math.Max(0, _updatesActionRow.ClientSize.Width - gap * (visible.Length - 1));
+        int[] widths = visible.Select(button =>
+            Math.Max(ScaleUi(100), TextRenderer.MeasureText(button.Text, button.Font).Width + ScaleUi(26)))
+            .ToArray();
+        int total = widths.Sum();
+
+        // If a translated label is longer than the available row, shrink all
+        // visible actions proportionally; smaller page widths can still scroll.
+        if (total > available && total > 0)
+        {
+            double ratio = available / (double)total;
+            for (int i = 0; i < widths.Length; i++)
+                widths[i] = Math.Max(ScaleUi(72), (int)Math.Floor(widths[i] * ratio));
+        }
+
+        for (int i = 0; i < visible.Length; i++)
+        {
+            visible[i].Size = new Size(widths[i], ScaleUi(32));
+            visible[i].Margin = ScaleUiPadding(0, 2, i < visible.Length - 1 ? 8 : 0, 2);
+        }
     }
 
     private void OnUpdateStatusChanged(UpdateSnapshot snapshot)
@@ -299,5 +354,6 @@ public sealed partial class SettingsForm
             _updatesLaterButton.Visible = snapshot.Status is UpdateStatus.Downloaded or UpdateStatus.InstallationFailed;
             _updatesLaterButton.Enabled = !pendingChanged && !_installLaunchInProgress;
         }
+        ResizeUpdateActionButtons();
     }
 }

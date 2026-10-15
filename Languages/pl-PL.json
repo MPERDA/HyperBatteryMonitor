@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Podczas wykrywania zestaw słuchawkowy powinien być włączony i połączony.",
   "AutoDetectionNoDevice": "Nie wykryto zgodnego urządzenia. Wybierz urządzenie ręcznie.",
   "AutoDetectionMultipleDevices": "Wykryto więcej niż jedno zgodne urządzenie. Wybierz żądane urządzenie ręcznie.",
-  "AutoDetectionUnsupportedReceiver": "Wykryto odbiornik HyperX Three-In-One. Ten typ połączenia nie jest jeszcze obsługiwany. W przypadku Cloud III S lub Cloud Flight 2 użyj dedykowanego odbiornika USB.",
+  "AutoDetectionUnsupportedReceiver": "Wykryto odbiornik HyperX Three-In-One, ale żaden zgodny zestaw słuchawkowy nie odpowiada. Sprawdź parowanie i zasilanie lub wybierz zestaw ręcznie.",
   "DedicatedDongleDeviceFormat": "{0} (dedykowany odbiornik USB)",
   "Connected": "Połączono",
   "Disconnected": "Rozłączono",

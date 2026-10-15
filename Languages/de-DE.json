@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Lassen Sie das Headset während der Erkennung eingeschaltet und verbunden.",
   "AutoDetectionNoDevice": "Es wurde kein kompatibles Gerät erkannt. Wählen Sie Ihr Gerät bitte manuell aus.",
   "AutoDetectionMultipleDevices": "Es wurde mehr als ein kompatibles Gerät erkannt. Wählen Sie das gewünschte Gerät bitte manuell aus.",
-  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One-Empfänger erkannt. Dieser Verbindungstyp wird noch nicht unterstützt. Verwenden Sie für Cloud III S oder Cloud Flight 2 den dedizierten Dongle.",
+  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One-Empfänger erkannt, aber kein kompatibles Headset antwortet. Überprüfen Sie Kopplung und Stromversorgung oder wählen Sie das Headset manuell aus.",
   "DedicatedDongleDeviceFormat": "{0} (dedizierter Dongle)",
   "Connected": "Verbunden",
   "Disconnected": "Getrennt",

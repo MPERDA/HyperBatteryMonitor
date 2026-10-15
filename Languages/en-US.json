@@ -120,7 +120,7 @@
   "AutoDetectionInstruction": "Please keep the headset powered on and connected during detection.",
   "AutoDetectionNoDevice": "No compatible device was detected. Please select your device manually.",
   "AutoDetectionMultipleDevices": "More than one compatible device was detected. Please select the desired device manually.",
-  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One receiver detected. This connection type is not supported yet. For Cloud III S or Cloud Flight 2, use the dedicated dongle.",
+  "AutoDetectionUnsupportedReceiver": "HyperX Three-In-One receiver detected, but no compatible headset responded. Check pairing and power, or select your headset manually.",
   "DedicatedDongleDeviceFormat": "{0} (Dedicated Dongle)",
   "Connected": "Connected",
   "Disconnected": "Disconnected",

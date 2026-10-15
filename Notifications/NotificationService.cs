@@ -184,6 +184,16 @@ public sealed class NotificationService
                 => "cloud2core.png",
 
             _ when normalized.Contains(
+                "Cloud Alpha 2",
+                StringComparison.OrdinalIgnoreCase)
+                => "cloudalpha2.png",
+
+            _ when normalized.Contains(
+                "Cloud Stinger 3",
+                StringComparison.OrdinalIgnoreCase)
+                => "cloudstinger3.png",
+
+            _ when normalized.Contains(
                 "Cloud Alpha",
                 StringComparison.OrdinalIgnoreCase)
                 => "cloudalpha.png",
