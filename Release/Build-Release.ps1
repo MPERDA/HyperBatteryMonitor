@@ -12,9 +12,9 @@ $installer = Join-Path $root 'Installer\HyperXBatteryTray.iss'
 
 [xml]$projectXml = Get-Content -LiteralPath $project -Raw
 $versionNodes = @(
-    $projectXml.Project.PropertyGroup |
-        ForEach-Object { $_.Version } |
-        Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+    $projectXml.SelectNodes('/Project/PropertyGroup/Version') |
+        ForEach-Object { $_.InnerText.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 )
 
 if ($versionNodes.Count -ne 1) {
@@ -38,9 +38,9 @@ if ($versionParts.Count -ne 4 -or @($versionParts | Where-Object { $_ -lt 0 -or 
 $numericVersion = ($versionParts -join '.')
 
 $channelNodes = @(
-    $projectXml.Project.PropertyGroup |
-        ForEach-Object { $_.ReleaseChannel } |
-        Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+    $projectXml.SelectNodes('/Project/PropertyGroup/ReleaseChannel') |
+        ForEach-Object { $_.InnerText.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 )
 if ($channelNodes.Count -ne 1) {
     throw "Expected exactly one <ReleaseChannel> property in $project."
@@ -53,9 +53,9 @@ if ($releaseChannel -cnotin @('Stable', 'Beta')) {
 $releaseVersion = $baseVersion
 if ($releaseChannel -ceq 'Beta') {
     $betaNodes = @(
-        $projectXml.Project.PropertyGroup |
-            ForEach-Object { $_.BetaNumber } |
-            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+        $projectXml.SelectNodes('/Project/PropertyGroup/BetaNumber') |
+            ForEach-Object { $_.InnerText.Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
     )
     if ($betaNodes.Count -ne 1) {
         throw "Expected exactly one <BetaNumber> property in $project."
