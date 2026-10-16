@@ -41,6 +41,8 @@ public sealed partial class SettingsForm : Form
     private BatteryIconControl _batteryIcon = null!;
     private readonly Panel _pageHost;
     private TableLayoutPanel? _activePageLayout;
+    private ThemedVerticalScrollBar? _pageHostScrollBar;
+    private ThemedVerticalScrollBar? _activePageScrollBar;
     private readonly Panel _sidebar;
     private Panel _footer = null!;
     private Button _resetButton = null!;
@@ -189,6 +191,10 @@ public sealed partial class SettingsForm : Form
         ApplyNativeScrollTheme(_pageHost, dark);
         if (_activePageLayout != null)
             ApplyNativeScrollTheme(_activePageLayout, dark);
+        _pageHostScrollBar?.SetTheme(dark);
+        _activePageScrollBar?.SetTheme(dark);
+        _pageHostScrollBar?.RefreshState();
+        _activePageScrollBar?.RefreshState();
     }
 
     private static void ApplyNativeScrollTheme(ScrollableControl control, bool dark)
@@ -280,7 +286,8 @@ public sealed partial class SettingsForm : Form
         MinimizeBox = true;
         ShowInTaskbar = true;
         ClientSize = new Size(760, 520);
-        TopMost = true;
+        // Standard Windows z-order: owned dialogs remain above this window
+        // without preventing other applications from taking the foreground.
         DoubleBuffered = true;
         BackColor = LightBackground;
         Font = new Font("Segoe UI", 9.5f);
@@ -305,6 +312,7 @@ public sealed partial class SettingsForm : Form
 
         Controls.Add(_pageHost);
         Controls.Add(_sidebar);
+        _pageHostScrollBar = new ThemedVerticalScrollBar(_pageHost, EffectiveTheme == AppTheme.Dark);
 
         _sidebarDeviceCard = new RoundedPanel
         {

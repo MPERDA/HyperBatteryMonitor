@@ -48,6 +48,7 @@ public sealed partial class SettingsForm : Form
         private readonly List<ColorSwatchControl> _swatches = new();
         private readonly List<CriticalBatteryNumericControl> _levels = new();
         private Panel _contentHost = null!;
+        private ThemedVerticalScrollBar _contentScrollBar = null!;
         private TableLayoutPanel _contentLayout = null!;
         private ToggleSwitchControl _gradientToggle = null!;
         private CriticalBatteryNumericControl _gradientStepInput = null!;
@@ -103,7 +104,7 @@ public sealed partial class SettingsForm : Form
             MaximizeBox = false;
             ShowInTaskbar = false;
             ShowIcon = false;
-            TopMost = true;
+            // ShowDialog(settingsForm) keeps this modal above its owner only.
             DoubleBuffered = true;
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint |
@@ -139,6 +140,12 @@ public sealed partial class SettingsForm : Form
             // Complete the DPI-aware responsive layout before the first visible paint.
             // Running this from OnShown would expose the intermediate control layout to the user.
             FitToWorkingArea();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            _contentScrollBar.RefreshState();
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -217,7 +224,15 @@ public sealed partial class SettingsForm : Form
             };
             _contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             _contentHost.Controls.Add(_contentLayout);
-            shell.Controls.Add(_contentHost, 0, 2);
+            Panel contentWrapper = new()
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0),
+                BackColor = _dark ? DarkBackground : LightBackground
+            };
+            contentWrapper.Controls.Add(_contentHost);
+            shell.Controls.Add(contentWrapper, 0, 2);
+            _contentScrollBar = new ThemedVerticalScrollBar(_contentHost, _dark);
 
             BuildContent(useGradient, gradientPercent);
 
@@ -848,6 +863,7 @@ public sealed partial class SettingsForm : Form
 
             _contentHost.AutoScroll = desiredClientHeight > availableHeight;
             ClientSize = new Size(targetWidth, targetHeight);
+            _contentScrollBar.RefreshState();
             CenterToParent();
 
             int clampedX = Math.Clamp(Left, workingArea.Left, Math.Max(workingArea.Left, workingArea.Right - Width));

@@ -59,13 +59,17 @@ internal sealed class GitHubReleaseChecker
         foreach (JsonElement item in document.RootElement.EnumerateArray())
         {
             if (!TryParseRelease(item, channel, out AvailableRelease? candidate) ||
-                candidate is null || candidate.Version.CompareTo(current) <= 0)
+                candidate is null)
                 continue;
 
             if (best is null || candidate.Version.CompareTo(best.Version) > 0)
                 best = candidate;
         }
-        return best;
+        // Compare only after selecting the newest valid release within the chosen
+        // channel. A Beta user switching to Stable may need an older stable build.
+        return best is not null &&
+            UpdateChannelPolicy.IsEligibleTarget(current, best.Version, channel)
+            ? best : null;
     }
 
     private static bool TryParseRelease(

@@ -280,6 +280,8 @@ public sealed partial class SettingsForm : Form
 
     private TableLayoutPanel BeginResponsivePage()
     {
+        _activePageScrollBar?.Dispose();
+        _activePageScrollBar = null;
         _pageHost.Controls.Clear();
         _activePageLayout = new TableLayoutPanel
         {
@@ -295,6 +297,7 @@ public sealed partial class SettingsForm : Form
         };
         _activePageLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _pageHost.Controls.Add(_activePageLayout);
+        _activePageScrollBar = new ThemedVerticalScrollBar(_activePageLayout, EffectiveTheme == AppTheme.Dark);
         if (IsHandleCreated)
             ApplyNativeScrollTheme(_activePageLayout, EffectiveTheme == AppTheme.Dark);
         return _activePageLayout;

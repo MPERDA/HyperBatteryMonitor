@@ -87,7 +87,8 @@ internal sealed class TrayContextMenuForm : Form
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         ClientSize = new Size(MenuLogicalWidth, MenuLogicalHeight);
-        TopMost = true;
+        // ShowAt() activates this menu on demand; when focus is lost it hides.
+        // It does not need to stay above unrelated applications.
         DoubleBuffered = true;
         Padding = new Padding(0);
         BackColor = Color.FromArgb(45, 48, 51);

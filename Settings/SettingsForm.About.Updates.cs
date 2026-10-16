@@ -5,8 +5,7 @@ namespace HyperXBatteryTray.Settings;
 public sealed partial class SettingsForm
 {
     private const int AboutUpdatesCardLogicalHeight = 204;
-    private Label? _updatesStatusLabel;
-    private LinkLabel? _updatesWhatsNewLink;
+    private LinkLabel? _updatesStatusLabel;
     private ActionButton? _updatesCheckButton;
     private ActionButton? _updatesDownloadButton;
     private ActionButton? _updatesInstallButton;
@@ -87,39 +86,28 @@ public sealed partial class SettingsForm
         notify.CheckedChanged += (_, _) => { if (notify.Checked) { _pendingUpdateDownloadMode = UpdateDownloadMode.NotifyBeforeDownload; RefreshUpdatesUi(); } };
         AddUpdatesRow(layout, modeRow, 26);
 
-        // Keep the release-notes action beside the status, with no extra
-        // About-card height and no web browser embedded in the application.
-        TableLayoutPanel statusRow = new()
+        // A single LinkLabel puts the clickable segment immediately after the
+        // version status, including in translated languages and test mode.
+        // Only the link text is interactive; the status remains ordinary text.
+        _updatesStatusLabel = new LinkLabel
         {
+            Text = L("UpdatesIdle"),
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1,
-            Margin = new Padding(0),
-            BackColor = Color.Transparent
-        };
-        statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        statusRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        _updatesStatusLabel = CreateUpdateLabel("UpdatesIdle", 8.5f, secondary);
-        _updatesWhatsNewLink = new LinkLabel
-        {
-            Text = L("UpdatesWhatsNew"),
-            AutoSize = true,
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleRight,
-            Margin = ScaleUiPadding(12, 0, 0, 0),
-            Font = new Font("Segoe UI Semibold", 8.5f),
+            Font = new Font("Segoe UI", 8.5f),
+            ForeColor = secondary,
+            BackColor = Color.Transparent,
+            TextAlign = ContentAlignment.MiddleLeft,
             LinkBehavior = LinkBehavior.AlwaysUnderline,
             LinkColor = dark ? Color.FromArgb(95, 174, 255) : Color.FromArgb(0, 102, 204),
             ActiveLinkColor = dark ? Color.FromArgb(140, 197, 255) : Color.FromArgb(0, 75, 165),
             VisitedLinkColor = dark ? Color.FromArgb(95, 174, 255) : Color.FromArgb(0, 102, 204),
-            BackColor = Color.Transparent,
-            Visible = false
+            AutoEllipsis = false,
+            UseCompatibleTextRendering = false
         };
-        _updatesWhatsNewLink.LinkClicked += (_, _) => ShowAvailableReleaseNotes();
-        statusRow.Controls.Add(_updatesStatusLabel, 0, 0);
-        statusRow.Controls.Add(_updatesWhatsNewLink, 1, 0);
-        AddUpdatesRow(layout, statusRow, 32);
+        _updatesStatusLabel.Links.Clear();
+        _updatesStatusLabel.LinkArea = new LinkArea(0, 0);
+        _updatesStatusLabel.LinkClicked += (_, _) => ShowAvailableReleaseNotes();
+        AddUpdatesRow(layout, _updatesStatusLabel, 32);
         _updatesProgress = new ProgressBar
         {
             Dock = DockStyle.Fill,
@@ -162,8 +150,23 @@ public sealed partial class SettingsForm
         };
         _updatesDownloadButton.Click += async (_, _) =>
         {
-            if (_updateCoordinator is not null)
-                await _updateCoordinator.DownloadAvailableAsync();
+            if (_updateCoordinator is null ||
+                _pendingUpdateChannel != _settings.UpdateChannel ||
+                _pendingUpdateDownloadMode != _settings.UpdateDownloadMode)
+                return;
+
+            UpdateSnapshot update = _updateCoordinator.Snapshot;
+            if (update.IsStableRollback)
+            {
+                if (update.Status != UpdateStatus.Available ||
+                    MessageBox.Show(this,
+                        string.Format(L("UpdatesStableRollbackDownloadConfirm"),
+                            update.Version ?? string.Empty),
+                        Application.ProductName, MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) != DialogResult.Yes)
+                    return;
+            }
+            await _updateCoordinator.DownloadAvailableAsync();
         };
         _updatesInstallButton.Click += async (_, _) => await InstallUpdateFromAboutAsync();
         _updatesLaterButton.Click += (_, _) =>
@@ -183,10 +186,27 @@ public sealed partial class SettingsForm
             _pendingUpdateDownloadMode != _settings.UpdateDownloadMode)
             return;
 
+        // Match the existing auto-detection modal: theme-aware dialog, rounded
+        // corners and buttons, and a darkened owner background. Using the
+        // overlay as modal owner keeps it above HBM, not above other apps.
+        using DeviceDetectionOverlayForm overlay = new(this);
         using UpdateReleaseNotesDialog dialog = new(
-            release.Tag, release.ReleaseNotes, release.ReleasePageUrl,
-            _selectedLanguage, EffectiveTheme == AppTheme.Dark);
-        dialog.ShowDialog(this);
+            _iconCache, DeviceDpi, release.Tag, release.ReleaseNotes,
+            release.ReleasePageUrl, _selectedLanguage,
+            EffectiveTheme == AppTheme.Dark);
+        overlay.Show(this);
+        overlay.BringToFront();
+        try
+        {
+            dialog.ShowDialog(overlay);
+        }
+        finally
+        {
+            // The modal owner chain restores HBM naturally when appropriate.
+            // Do not force Activate(): a browser opened from the dialog should
+            // be allowed to remain the foreground application.
+            overlay.Close();
+        }
     }
 
     private async Task InstallUpdateFromAboutAsync()
@@ -200,7 +220,10 @@ public sealed partial class SettingsForm
             return;
 
         string version = _updateCoordinator.Snapshot.Version ?? string.Empty;
-        if (MessageBox.Show(this, string.Format(L("UpdatesInstallConfirm"), version),
+        string confirmationKey = _updateCoordinator.Snapshot.IsStableRollback
+            ? "UpdatesStableRollbackInstallConfirm"
+            : "UpdatesInstallConfirm";
+        if (MessageBox.Show(this, string.Format(L(confirmationKey), version),
                 Application.ProductName, MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question) != DialogResult.Yes)
         {
@@ -372,19 +395,45 @@ public sealed partial class SettingsForm
             UpdateStatus.StoreManaged => "UpdatesStoreManaged",
             _ => "UpdatesIdle"
         };
-        _updatesStatusLabel.Text = ApplicationRuntime.TestIndicator +
+        if (!pendingChanged && snapshot.IsStableRollback)
+        {
+            key = snapshot.Status switch
+            {
+                UpdateStatus.Available => "UpdatesStableRollbackAvailable",
+                UpdateStatus.Downloaded => "UpdatesStableRollbackDownloaded",
+                UpdateStatus.InstallationFailed => "UpdatesStableRollbackInstallFailed",
+                _ => key
+            };
+        }
+        string statusText = ApplicationRuntime.TestIndicator +
             string.Format(L(key), snapshot.Version ?? string.Empty, snapshot.Percent);
-        if (_updatesWhatsNewLink is { IsDisposed: false })
-            _updatesWhatsNewLink.Visible = !pendingChanged &&
-                (snapshot.Status is UpdateStatus.Available or UpdateStatus.Downloading or
-                    UpdateStatus.Downloaded or UpdateStatus.InstallationFailed) &&
-                _updateCoordinator.ReleaseForSnapshot is not null;
+        bool hasNotesLink = !pendingChanged &&
+            (snapshot.Status is UpdateStatus.Available or UpdateStatus.Downloading or
+                UpdateStatus.Downloaded or UpdateStatus.InstallationFailed) &&
+            _updateCoordinator.ReleaseForSnapshot is not null;
+        _updatesStatusLabel.Links.Clear();
+        if (hasNotesLink)
+        {
+            // Remove sentence-ending punctuation before the inline link:
+            // "Version ... is available (See what's new)".
+            string inlineStatus = statusText.TrimEnd().TrimEnd('.', '。', '!', '！');
+            string whatsNew = L("UpdatesWhatsNew");
+            _updatesStatusLabel.Text = inlineStatus + " (" + whatsNew + ")";
+            _updatesStatusLabel.Links.Add(inlineStatus.Length + 2, whatsNew.Length);
+        }
+        else
+        {
+            _updatesStatusLabel.Text = statusText;
+            _updatesStatusLabel.LinkArea = new LinkArea(0, 0);
+        }
         bool busy = snapshot.Status is UpdateStatus.Checking or UpdateStatus.Downloading;
         if (_updatesCheckButton is { IsDisposed: false })
             _updatesCheckButton.Enabled = !busy && !pendingChanged && !_installLaunchInProgress;
         if (_updatesDownloadButton is { IsDisposed: false })
         {
             _updatesDownloadButton.Visible = snapshot.Status == UpdateStatus.Available;
+            _updatesDownloadButton.Text = L(snapshot.IsStableRollback
+                ? "UpdatesStableRollbackDownload" : "UpdatesDownload");
             _updatesDownloadButton.Enabled = !pendingChanged && !_installLaunchInProgress;
         }
         if (_updatesProgress is { IsDisposed: false })

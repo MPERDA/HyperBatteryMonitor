@@ -16,6 +16,7 @@ public sealed partial class SettingsForm : Form
     {
         private bool _darkMode;
         private LanguagePopupControl? _popup;
+        private ThemedVerticalScrollBar? _popupScrollBar;
         private LanguagePopupMessageFilter? _popupMessageFilter;
         private int _selectedIndex = -1;
 
@@ -28,6 +29,7 @@ public sealed partial class SettingsForm : Form
                 if (_darkMode == value) return;
                 _darkMode = value;
                 _popup?.ApplyTheme(_darkMode);
+                _popupScrollBar?.SetTheme(_darkMode);
                 Invalidate();
             }
         }
@@ -203,7 +205,9 @@ public sealed partial class SettingsForm : Form
                 : new Point(selectorLocation.X, selectorLocation.Y - popupHeight);
             form.Controls.Add(_popup);
             _popup.BringToFront();
+            _popupScrollBar = new ThemedVerticalScrollBar(_popup, _darkMode);
             _popup.ScrollSelectedIntoView();
+            _popupScrollBar.RefreshState();
             _popup.Focus();
         }
 
@@ -231,6 +235,8 @@ public sealed partial class SettingsForm : Form
             }
             popup.ItemClicked -= Popup_ItemClicked;
             popup.Dismissed -= Popup_Dismissed;
+            _popupScrollBar?.Dispose();
+            _popupScrollBar = null;
             if (popup.Parent != null)
                 popup.Parent.Controls.Remove(popup);
             popup.Dispose();

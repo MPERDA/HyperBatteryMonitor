@@ -480,6 +480,7 @@ public sealed partial class SettingsForm : Form
             private readonly List<DeviceOption> _options;
             private readonly Action<int> _select;
             private readonly Panel _list;
+            private readonly ThemedVerticalScrollBar _listScrollBar;
             private bool _dark;
             private AppLanguage _language;
 
@@ -490,7 +491,8 @@ public sealed partial class SettingsForm : Form
                 StartPosition = FormStartPosition.Manual;
                 ShowInTaskbar = false;
                 ShowIcon = false;
-                TopMost = true;
+                // Show(ownerForm) keeps the popup above its owning HBM window,
+                // without pinning it over other Windows applications.
                 AutoScaleMode = AutoScaleMode.None;
                 Padding = new Padding(1);
                 _list = new Panel
@@ -503,16 +505,24 @@ public sealed partial class SettingsForm : Form
                     Padding = new Padding(0)
                 };
                 Controls.Add(_list);
+                _listScrollBar = new ThemedVerticalScrollBar(_list, dark);
                 Paint += SearchPopup_Paint;
                 SetTheme(dark);
             }
 
             protected override bool ShowWithoutActivation => true;
 
+            protected override void OnShown(EventArgs e)
+            {
+                base.OnShown(e);
+                _listScrollBar.RefreshState();
+            }
+
             protected override void OnHandleCreated(EventArgs e)
             {
                 base.OnHandleCreated(e);
                 SettingsForm.ApplyNativeScrollTheme(_list, _dark);
+                _listScrollBar.RefreshState();
             }
 
             protected override CreateParams CreateParams
@@ -542,6 +552,7 @@ public sealed partial class SettingsForm : Form
                 BackColor = dark ? Color.FromArgb(48, 52, 56) : Color.FromArgb(225, 229, 235);
                 _list.BackColor = dark ? Color.FromArgb(38, 41, 44) : Color.White;
                 _list.ForeColor = dark ? Color.WhiteSmoke : LightText;
+                _listScrollBar.SetTheme(dark);
                 if (IsHandleCreated)
                     SettingsForm.ApplyNativeScrollTheme(_list, dark);
             }
@@ -602,6 +613,7 @@ public sealed partial class SettingsForm : Form
                 finally
                 {
                     _list.ResumeLayout(true);
+                    _listScrollBar.RefreshState();
                 }
             }
 

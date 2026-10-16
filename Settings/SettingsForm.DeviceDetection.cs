@@ -7,7 +7,10 @@ namespace HyperXBatteryTray.Settings;
 
 public sealed partial class SettingsForm : Form
 {
-    private static readonly TimeSpan AutoDetectionTimeout = TimeSpan.FromSeconds(8);
+    // The device search may use the full time limit; fast success still remains visible
+    // long enough for users to register that automatic detection actually ran.
+    private static readonly TimeSpan AutoDetectionTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan AutoDetectionMinimumVisibleTime = TimeSpan.FromMilliseconds(1500);
     private static readonly TimeSpan AutoDetectionRetryDelay = TimeSpan.FromMilliseconds(500);
     private const double AutoDetectionOverlayOpacity = 0.72;
     private const string DetectingImageFileName = "detecting.png";
@@ -306,7 +309,7 @@ public sealed partial class SettingsForm : Form
             Bounds = owner.Bounds;
             BackColor = Color.Black;
             Opacity = AutoDetectionOverlayOpacity;
-            TopMost = owner.TopMost;
+            // Owned by SettingsForm (overlay.Show(owner)); no global topmost.
             AutoScaleMode = AutoScaleMode.None;
         }
     }
@@ -352,7 +355,7 @@ public sealed partial class SettingsForm : Form
             MaximizeBox = false;
             ShowInTaskbar = false;
             ShowIcon = false;
-            TopMost = true;
+            // ShowDialog(overlay) maintains dialog-over-owner stacking.
             DoubleBuffered = true;
             AutoScaleMode = AutoScaleMode.None;
             BackColor = _dark ? DarkBackground : Color.White;
@@ -450,6 +453,9 @@ public sealed partial class SettingsForm : Form
 
         private async void DeviceDetectionDialog_Shown(object? sender, EventArgs e)
         {
+            // Measure from when the dialog is shown, not from when detection finishes.
+            // This minimum affects presentation only, not the HID search timeout.
+            System.Diagnostics.Stopwatch visibleDuration = System.Diagnostics.Stopwatch.StartNew();
             _detectionDeadlineUtc = DateTime.UtcNow + AutoDetectionTimeout;
             UpdateCountdownText();
             _countdownTimer.Start();
@@ -463,7 +469,6 @@ public sealed partial class SettingsForm : Form
                     return;
 
                 DetectedDevices = result.DetectedDevices;
-                _countdownTimer.Stop();
 
                 if (result.DetectedDevices.Count == 0)
                 {
@@ -475,30 +480,45 @@ public sealed partial class SettingsForm : Form
                     return;
                 }
 
+                // A device may be found almost instantly. Keep the modal visible
+                // for at least 1.5 seconds in total without delaying the HID probe.
+                TimeSpan remainingDisplayTime =
+                    AutoDetectionMinimumVisibleTime - visibleDuration.Elapsed;
+                if (remainingDisplayTime > TimeSpan.Zero)
+                {
+                    // Cancelling the dialog must remain immediate during this wait.
+                    await Task.Delay(remainingDisplayTime, _cancellation.Token);
+
+                    if (_cancelledByUser || IsDisposed || Disposing)
+                        return;
+                }
+
+                // Keep the countdown running until the dialog actually closes,
+                // including the minimum-visible-time interval after a quick success.
+                _countdownTimer.Stop();
                 DialogResult = DialogResult.OK;
                 Close();
             }
             catch (OperationCanceledException)
             {
-                _countdownTimer.Stop();
+                if (_cancelledByUser || IsDisposed || Disposing)
+                    return;
 
-                if (!_cancelledByUser && !IsDisposed && !Disposing)
-                {
-                    DetectedDevices = Array.Empty<string>();
-                    ShowNoDeviceDetectedState();
-                }
+                _countdownTimer.Stop();
+                DetectedDevices = Array.Empty<string>();
+                ShowNoDeviceDetectedState();
             }
             catch (Exception ex)
             {
+                if (IsDisposed || Disposing)
+                    return;
+
                 _countdownTimer.Stop();
                 System.Diagnostics.Debug.WriteLine(
                     $"Automatic device detection failed: {ex.Message}");
 
-                if (!IsDisposed && !Disposing)
-                {
-                    DetectedDevices = Array.Empty<string>();
-                    ShowNoDeviceDetectedState();
-                }
+                DetectedDevices = Array.Empty<string>();
+                ShowNoDeviceDetectedState();
             }
         }
 

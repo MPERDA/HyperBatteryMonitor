@@ -15,7 +15,9 @@ internal enum UpdateStatus
     StoreManaged
 }
 
-internal sealed record UpdateSnapshot(UpdateStatus Status, string? Version = null, int Percent = 0);
+internal sealed record UpdateSnapshot(
+    UpdateStatus Status, string? Version = null, int Percent = 0,
+    bool IsStableRollback = false);
 
 internal sealed record VerifiedInstaller(string Path, DownloadedUpdate Metadata);
 
@@ -105,7 +107,8 @@ internal sealed class UpdateCoordinator : IDisposable
         // Recheck on channel changes. Changing only the download preference to
         // automatic can use an already-validated release discovered this session.
         if (!channelChanged && _settings.UpdateDownloadMode == UpdateDownloadMode.DownloadAutomatically &&
-            _snapshot.Status == UpdateStatus.Available && _available is not null)
+            _snapshot.Status == UpdateStatus.Available &&
+            !_snapshot.IsStableRollback && _available is not null)
             _ = DownloadAvailableAsync();
         else
             _ = CheckAsync(false);
@@ -172,14 +175,18 @@ internal sealed class UpdateCoordinator : IDisposable
                 return;
             }
 
-            if (_settings.UpdateDownloadMode == UpdateDownloadMode.DownloadAutomatically)
+            bool isStableRollback = IsStableRollback(release.Version, channel);
+            // Never download an older Stable automatically. A channel switch that
+            // lowers the installed version always requires deliberate consent.
+            if (!isStableRollback &&
+                _settings.UpdateDownloadMode == UpdateDownloadMode.DownloadAutomatically)
             {
                 await DownloadCoreAsync(release).ConfigureAwait(false);
                 return;
             }
 
-            Publish(new UpdateSnapshot(UpdateStatus.Available, release.Tag));
-            if (!manual && _lastAvailableNotificationTag != release.Tag)
+            Publish(new UpdateSnapshot(UpdateStatus.Available, release.Tag, 0, isStableRollback));
+            if (!isStableRollback && !manual && _lastAvailableNotificationTag != release.Tag)
             {
                 _lastAvailableNotificationTag = release.Tag;
                 UpdateNotificationService.Available(release.Tag, _settings.Language);
@@ -212,8 +219,8 @@ internal sealed class UpdateCoordinator : IDisposable
             if (release is null)
                 return;
             if (!ReleaseVersion.TryParse(_installedVersion, out ReleaseVersion installed) ||
-                release.Version.CompareTo(installed) <= 0 ||
-                (_settings.UpdateChannel == UpdateChannel.Stable && release.Version.IsPrerelease))
+                !UpdateChannelPolicy.IsEligibleTarget(installed, release.Version,
+                    _settings.UpdateChannel))
                 return;
             await DownloadCoreAsync(release).ConfigureAwait(false);
         }
@@ -270,24 +277,33 @@ internal sealed class UpdateCoordinator : IDisposable
 
     internal void ClearInstallationFailure() => _store.ClearInstallationResult();
 
+    private bool IsStableRollback(ReleaseVersion target, UpdateChannel channel) =>
+        ReleaseVersion.TryParse(_installedVersion, out ReleaseVersion installed) &&
+        UpdateChannelPolicy.IsStableRollback(installed, target, channel);
+
     private UpdateSnapshot CachedSnapshot(DownloadedUpdate update) =>
         new(_store.HasInstallationFailure() ? UpdateStatus.InstallationFailed :
-            UpdateStatus.Downloaded, update.Tag);
+            UpdateStatus.Downloaded, update.Tag, 0,
+            ReleaseVersion.TryParse(update.Tag, out ReleaseVersion target) &&
+            IsStableRollback(target, _settings.UpdateChannel));
 
     private async Task DownloadCoreAsync(AvailableRelease release)
     {
-        Publish(new UpdateSnapshot(UpdateStatus.Downloading, release.Tag));
+        bool isStableRollback = IsStableRollback(release.Version, _settings.UpdateChannel);
+        Publish(new UpdateSnapshot(UpdateStatus.Downloading, release.Tag, 0, isStableRollback));
         var progress = new Progress<UpdateDownloadProgress>(p =>
         {
             int percent = p.TotalBytes <= 0 ? 0 :
                 (int)Math.Clamp(p.DownloadedBytes * 100L / p.TotalBytes, 0, 100);
             if (_snapshot.Status == UpdateStatus.Downloading && _snapshot.Version == release.Tag)
-                Publish(new UpdateSnapshot(UpdateStatus.Downloading, release.Tag, percent));
+                Publish(new UpdateSnapshot(UpdateStatus.Downloading, release.Tag, percent,
+                    isStableRollback));
         });
         DownloadedUpdate downloaded = await _downloader.DownloadAsync(release, progress,
             _lifetimeToken).ConfigureAwait(false);
         if (_disposed) return;
-        Publish(new UpdateSnapshot(UpdateStatus.Downloaded, downloaded.Tag));
+        Publish(new UpdateSnapshot(UpdateStatus.Downloaded, downloaded.Tag, 0,
+            isStableRollback));
         UpdateNotificationService.Downloaded(downloaded.Tag, _settings.Language);
         ArmReminder();
     }

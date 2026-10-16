@@ -202,9 +202,7 @@ internal sealed class UpdateStateStore
             return null;
 
         _ = ReleaseVersion.TryParse(update.Tag, out ReleaseVersion cachedVersion);
-        if (cachedVersion.CompareTo(installed) <= 0 ||
-            (channel == UpdateChannel.Stable && cachedVersion.IsPrerelease) ||
-            (cachedVersion.IsPrerelease && !IsBeta(cachedVersion)))
+        if (!UpdateChannelPolicy.IsEligibleTarget(installed, cachedVersion, channel))
         {
             DiscardIfCurrent(update);
             return null;
@@ -314,9 +312,6 @@ internal sealed class UpdateStateStore
         return true;
     }
 
-    private static bool IsBeta(ReleaseVersion version) =>
-        version.Prerelease is "beta" ||
-        (version.Prerelease?.StartsWith("beta.", StringComparison.Ordinal) ?? false);
 
     private static void TryDeleteFile(string path)
     {
