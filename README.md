@@ -346,6 +346,8 @@ Special thanks to the following people and projects for their contributions to t
 
 # Downloads
 
+## Last Stable release:
 [![Stable](https://img.shields.io/github/v/release/davidsantanaalves/HyperBatteryMonitor?label=Stable&color=green)](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases/latest)
 
+## Last BETA release:
 [![Beta](https://img.shields.io/github/v/release/davidsantanaalves/HyperBatteryMonitor?include_prereleases&filter=*beta*&sort=date&label=Beta&color=orange)](https://github.com/davidsantanaalves/HyperBatteryMonitor/releases?q=prerelease%3Atrue)
