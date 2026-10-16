@@ -20,8 +20,13 @@ public sealed class CloudStinger3WirelessDevice : HyperXBatteryDeviceBase
         "HyperX Cloud Stinger 3 Wireless (PC)", 0x01C6);
     internal static readonly HyperXDeviceDefinition PsDefinition = CreateDefinition(
         "HyperX Cloud Stinger 3 Wireless (PlayStation)", 0x03C6);
+    // Physical CloudX Stinger 3 Xbox (BS1U0AA) on Windows 11 exposes several
+    // HID collections under 03F0:0DC5. The NGENUITY control collection is
+    // MI_03&Col05 (UsagePage 01C0 / Usage 0001), confirmed by a beta tester.
+    // Restrict ONLY Xbox to this observed endpoint; do not guess MI/Col for PC/PS.
     internal static readonly HyperXDeviceDefinition XboxDefinition = CreateDefinition(
-        "HyperX Cloud Stinger 3 Wireless (Xbox)", 0x0DC5);
+        "HyperX Cloud Stinger 3 Wireless (Xbox)", 0x0DC5,
+        "VID_03F0&PID_0DC5&MI_03&Col05");
 
     private bool _chargeKnown;
 
@@ -87,14 +92,15 @@ public sealed class CloudStinger3WirelessDevice : HyperXBatteryDeviceBase
         base.Disconnect();
     }
 
-    private static HyperXDeviceDefinition CreateDefinition(string name, ushort pid) => new()
+    private static HyperXDeviceDefinition CreateDefinition(
+        string name, ushort pid, string? observedControlInterface = null) => new()
     {
         Name = name,
         VendorId = 0x03F0,
         ProductId = pid,
-        // The new NGENUITY endpoint registry proves VID/PID and Usage,
-        // but not MI/Col. Query/response matching prevents false positive detection.
-        InterfacePattern = $"VID_03F0&PID_{pid:X4}",
+        // MI/Col is physically confirmed only for the Xbox variant; keep
+        // the pre-existing PC/PlayStation matching rules unchanged.
+        InterfacePattern = observedControlInterface ?? $"VID_03F0&PID_{pid:X4}",
         BatteryCommandBytes = Command(BatterySelector),
         BatteryByteIndex = 6,
         SupportsChargingMonitoring = true,
@@ -104,11 +110,16 @@ public sealed class CloudStinger3WirelessDevice : HyperXBatteryDeviceBase
     private static byte[] Command(byte selector) =>
         new byte[] { ResponseId, 0x02, 0x03, 0x01, 0x00, selector };
 
+    // NGENUITY 3.1.0 Windows input dispatcher validates the report ID plus
+    // bytes [1]=02/[2]=03, then dispatches responses by [5] and notifications
+    // by [4]. Bytes [3]/[4] of a response and [3] of a notification are NOT
+    // part of that dispatcher's proven inbound gate (unlike outbound framing).
+    // Do not reject a valid device response based on those unproven checks.
     private static bool IsResponse(byte[] r, byte selector) =>
         r.Length >= 7 && r[0] == ResponseId && r[1] == 0x02 && r[2] == 0x03 &&
-        r[3] == 0x01 && r[4] == 0x00 && r[5] == selector && r[6] != 0xFF;
+        r[5] == selector && r[6] != 0xFF;
 
     private static bool IsNotification(byte[] r, byte selector) =>
         r.Length >= 6 && r[0] == NotificationId && r[1] == 0x02 && r[2] == 0x03 &&
-        r[3] == 0x00 && r[4] == selector;
+        r[4] == selector;
 }
