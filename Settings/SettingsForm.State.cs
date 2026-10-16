@@ -97,7 +97,7 @@ public sealed partial class SettingsForm : Form
         if (_footer != null) _footer.BackColor = background;
         _versionLabel.ForeColor = secondary;
         _applicationNameLabel.ForeColor = foreground;
-        _versionLabel.Text = "v " + AppReleaseInfo.DisplayVersion;
+        _versionLabel.Text = "v" + AppReleaseInfo.DisplayVersion;
 
         Icon = LoadApplicationIcon();
         WarmUpIcons();

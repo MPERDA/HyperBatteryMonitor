@@ -10,7 +10,8 @@ internal sealed record AvailableRelease(
     Uri DownloadUrl,
     Uri ReleasePageUrl,
     string Sha256,
-    long SizeBytes);
+    long SizeBytes,
+    string? ReleaseNotes);
 
 /// <summary>
 /// Discovers installable updates only; does not download or execute installers.
@@ -115,7 +116,17 @@ internal sealed class GitHubReleaseChecker
                     StringComparison.Ordinal))
                 continue;
 
-            release = new AvailableRelease(tag, version, installerUrl, pageUrl, sha256, size);
+            // GitHub release descriptions are Markdown, not HTML. Keep a bounded
+            // copy of the release body so the About page can display it safely.
+            string? notes = null;
+            if (item.TryGetProperty("body", out JsonElement body) &&
+                body.ValueKind == JsonValueKind.String)
+            {
+                string? text = body.GetString();
+                if (!string.IsNullOrWhiteSpace(text))
+                    notes = text.Length > 65536 ? text[..65536] : text;
+            }
+            release = new AvailableRelease(tag, version, installerUrl, pageUrl, sha256, size, notes);
             return true;
         }
         return false;

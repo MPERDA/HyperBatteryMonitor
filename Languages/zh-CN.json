@@ -209,5 +209,10 @@
   "CloudStinger2_ConnectionMethod": "USB 无线适配器",
   "CloudStinger2_Range": "最远 20 米",
   "CloudStinger2_Battery": "最长 20 小时",
-  "CloudStinger2_ChargeTime": "约 3.5 小时"
+  "CloudStinger2_ChargeTime": "约 3.5 小时",
+  "UpdatesWhatsNew": "更新内容",
+  "UpdatesReleaseNotesTitle": "{0} 更新内容",
+  "UpdatesReleaseNotesUnavailable": "此版本暂无发行说明。您可以在 GitHub 上查看该版本。",
+  "UpdatesViewOnGitHub": "在 GitHub 上查看",
+  "UpdatesClose": "关闭"
 }

@@ -50,6 +50,14 @@ internal sealed class UpdateCoordinator : IDisposable
     internal event Action<UpdateSnapshot>? Changed;
 
     internal UpdateSnapshot Snapshot => _snapshot;
+    // The release was already validated by GitHubReleaseChecker. Expose its
+    // release notes without a second unauthenticated browser/web request.
+    internal AvailableRelease? ReleaseForSnapshot =>
+        _available is { } release &&
+        string.Equals(release.Tag, _snapshot.Version, StringComparison.Ordinal)
+            ? release
+            : null;
+
     internal bool IsStoreManaged => _storeManaged;
     internal bool IsReminderScheduled => !_storeManaged && _store.Load()?.InstallationDeferred == true;
 

@@ -21,8 +21,29 @@ internal static class AppReleaseInfo
         (AppAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? Application.ProductVersion).Split('+')[0];
 
-    internal static string DisplayVersion =>
-        SemanticVersion.Split('-')[0] + (IsBeta ? " [BETA]" : string.Empty);
+    internal static string DisplayVersion
+    {
+        get
+        {
+            string version = SemanticVersion.Split('-')[0];
+            if (!IsBeta)
+                return version;
+
+            // The compiled metadata is authoritative for the UI; the SemVer
+            // prerelease suffix is a fallback for older/externally built packages.
+            string? number = GetMetadata("HBMBetaNumber");
+            if (string.IsNullOrWhiteSpace(number))
+            {
+                string semantic = SemanticVersion;
+                int betaIndex = semantic.IndexOf("-beta.", StringComparison.Ordinal);
+                if (betaIndex >= 0)
+                    number = semantic[(betaIndex + "-beta.".Length)..];
+            }
+            return version + (string.IsNullOrWhiteSpace(number)
+                ? " [BETA]"
+                : $" [BETA {number}]");
+        }
+    }
 
     private static string? GetMetadata(string key) =>
         AppAssembly.GetCustomAttributes<AssemblyMetadataAttribute>()

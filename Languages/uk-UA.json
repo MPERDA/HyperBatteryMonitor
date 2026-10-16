@@ -209,5 +209,10 @@
   "CloudStinger2_ConnectionMethod": "Бездротовий USB-адаптер",
   "CloudStinger2_Range": "До 20 метрів",
   "CloudStinger2_Battery": "До 20 годин автономної роботи",
-  "CloudStinger2_ChargeTime": "Приблизно 3,5 години"
+  "CloudStinger2_ChargeTime": "Приблизно 3,5 години",
+  "UpdatesWhatsNew": "Що нового",
+  "UpdatesReleaseNotesTitle": "Що нового у {0}",
+  "UpdatesReleaseNotesUnavailable": "Примітки до цього випуску недоступні. Ви можете відкрити випуск на GitHub.",
+  "UpdatesViewOnGitHub": "Переглянути на GitHub",
+  "UpdatesClose": "Закрити"
 }

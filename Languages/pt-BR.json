@@ -209,5 +209,10 @@
   "CloudStinger2_ConnectionMethod": "Adaptador USB sem fio",
   "CloudStinger2_Range": "Até 20 metros",
   "CloudStinger2_Battery": "Até 20 horas",
-  "CloudStinger2_ChargeTime": "Aproximadamente 3,5 horas"
+  "CloudStinger2_ChargeTime": "Aproximadamente 3,5 horas",
+  "UpdatesWhatsNew": "Novidades",
+  "UpdatesReleaseNotesTitle": "Novidades da versão {0}",
+  "UpdatesReleaseNotesUnavailable": "As notas desta versão não estão disponíveis. Você pode abrir o release no GitHub.",
+  "UpdatesViewOnGitHub": "Ver no GitHub",
+  "UpdatesClose": "Fechar"
 }

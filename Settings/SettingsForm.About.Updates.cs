@@ -6,6 +6,7 @@ public sealed partial class SettingsForm
 {
     private const int AboutUpdatesCardLogicalHeight = 204;
     private Label? _updatesStatusLabel;
+    private LinkLabel? _updatesWhatsNewLink;
     private ActionButton? _updatesCheckButton;
     private ActionButton? _updatesDownloadButton;
     private ActionButton? _updatesInstallButton;
@@ -86,8 +87,39 @@ public sealed partial class SettingsForm
         notify.CheckedChanged += (_, _) => { if (notify.Checked) { _pendingUpdateDownloadMode = UpdateDownloadMode.NotifyBeforeDownload; RefreshUpdatesUi(); } };
         AddUpdatesRow(layout, modeRow, 26);
 
+        // Keep the release-notes action beside the status, with no extra
+        // About-card height and no web browser embedded in the application.
+        TableLayoutPanel statusRow = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0),
+            BackColor = Color.Transparent
+        };
+        statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        statusRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         _updatesStatusLabel = CreateUpdateLabel("UpdatesIdle", 8.5f, secondary);
-        AddUpdatesRow(layout, _updatesStatusLabel, 32);
+        _updatesWhatsNewLink = new LinkLabel
+        {
+            Text = L("UpdatesWhatsNew"),
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleRight,
+            Margin = ScaleUiPadding(12, 0, 0, 0),
+            Font = new Font("Segoe UI Semibold", 8.5f),
+            LinkBehavior = LinkBehavior.AlwaysUnderline,
+            LinkColor = dark ? Color.FromArgb(95, 174, 255) : Color.FromArgb(0, 102, 204),
+            ActiveLinkColor = dark ? Color.FromArgb(140, 197, 255) : Color.FromArgb(0, 75, 165),
+            VisitedLinkColor = dark ? Color.FromArgb(95, 174, 255) : Color.FromArgb(0, 102, 204),
+            BackColor = Color.Transparent,
+            Visible = false
+        };
+        _updatesWhatsNewLink.LinkClicked += (_, _) => ShowAvailableReleaseNotes();
+        statusRow.Controls.Add(_updatesStatusLabel, 0, 0);
+        statusRow.Controls.Add(_updatesWhatsNewLink, 1, 0);
+        AddUpdatesRow(layout, statusRow, 32);
         _updatesProgress = new ProgressBar
         {
             Dock = DockStyle.Fill,
@@ -142,6 +174,19 @@ public sealed partial class SettingsForm
         AddUpdatesRow(layout, _updatesActionRow, 38);
 
         RefreshUpdatesUi();
+    }
+
+    private void ShowAvailableReleaseNotes()
+    {
+        if (_updateCoordinator?.ReleaseForSnapshot is not { } release ||
+            _pendingUpdateChannel != _settings.UpdateChannel ||
+            _pendingUpdateDownloadMode != _settings.UpdateDownloadMode)
+            return;
+
+        using UpdateReleaseNotesDialog dialog = new(
+            release.Tag, release.ReleaseNotes, release.ReleasePageUrl,
+            _selectedLanguage, EffectiveTheme == AppTheme.Dark);
+        dialog.ShowDialog(this);
     }
 
     private async Task InstallUpdateFromAboutAsync()
@@ -329,6 +374,11 @@ public sealed partial class SettingsForm
         };
         _updatesStatusLabel.Text = ApplicationRuntime.TestIndicator +
             string.Format(L(key), snapshot.Version ?? string.Empty, snapshot.Percent);
+        if (_updatesWhatsNewLink is { IsDisposed: false })
+            _updatesWhatsNewLink.Visible = !pendingChanged &&
+                (snapshot.Status is UpdateStatus.Available or UpdateStatus.Downloading or
+                    UpdateStatus.Downloaded or UpdateStatus.InstallationFailed) &&
+                _updateCoordinator.ReleaseForSnapshot is not null;
         bool busy = snapshot.Status is UpdateStatus.Checking or UpdateStatus.Downloading;
         if (_updatesCheckButton is { IsDisposed: false })
             _updatesCheckButton.Enabled = !busy && !pendingChanged && !_installLaunchInProgress;

@@ -209,5 +209,10 @@
   "CloudStinger2_ConnectionMethod": "USB ワイヤレスアダプター",
   "CloudStinger2_Range": "最大 20 m",
   "CloudStinger2_Battery": "最大 20 時間",
-  "CloudStinger2_ChargeTime": "約 3.5 時間"
+  "CloudStinger2_ChargeTime": "約 3.5 時間",
+  "UpdatesWhatsNew": "新機能",
+  "UpdatesReleaseNotesTitle": "{0} の新機能",
+  "UpdatesReleaseNotesUnavailable": "このバージョンのリリースノートはありません。GitHub でリリースを確認できます。",
+  "UpdatesViewOnGitHub": "GitHub で表示",
+  "UpdatesClose": "閉じる"
 }
