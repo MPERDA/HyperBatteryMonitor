@@ -160,9 +160,10 @@ public sealed class HyperXDeviceManager : IDisposable
         HyperXDeviceRegistration? registration = FindRegistration(selectedDeviceName);
         if (registration == null)
             return null;
-        IHyperXDevice device = registration.Factory();
-        // Explicit historical HID variants are kept on their original drivers;
-        // only the normal user-facing model selection gains a Bluetooth fallback.
+        IHyperXDevice device = new ReceiverAwareDevice(registration.Definition.Name,
+            new[] { registration });
+        // Keep the same parser and HID command per registration; only endpoint
+        // resolution and battery validation are shared across all models.
         string name = registration.Definition.Name;
         return string.Equals(selectedDeviceName, name, StringComparison.OrdinalIgnoreCase) &&
                BluetoothBatteryProbe.SupportsModel(name)
@@ -218,41 +219,44 @@ public sealed class HyperXDeviceManager : IDisposable
     public static async Task<IReadOnlyList<string>> ProbeResponsiveDevicesAsync(
         CancellationToken cancellationToken = default)
     {
-        List<string> detectedDevices = new();
+        List<string> detected = new();
+        // Probe model families through the exact same receiver resolver that
+        // normal selection uses. Avoid 19 independent uncoordinated probes.
+        List<(string Model, IReadOnlyList<HyperXDeviceRegistration> Registrations)> searches = new();
+        foreach (string family in ReceiverFamilies.Keys)
+            searches.Add((family, GetReceiverCandidates(family)));
 
         foreach (HyperXDeviceRegistration registration in SupportedDevices)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            string? devicePath = HidConnection.FindDevice(registration.Definition);
-            if (string.IsNullOrWhiteSpace(devicePath))
+            if (ReceiverFamilies.Values.Any(family => family.Contains(
+                    registration.Definition.Name, StringComparer.OrdinalIgnoreCase)))
                 continue;
+            searches.Add((registration.Definition.Name, new[] { registration }));
+        }
 
-            using IHyperXDevice device = registration.Factory();
-
+        foreach (var (model, registrations) in searches)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using IHyperXDevice device = new ReceiverAwareDevice(model, registrations);
             try
             {
-                if (!device.Connect())
-                    continue;
-
+                if (!device.Connect()) continue;
                 int? battery = await device.QueryBatteryAsync(cancellationToken)
                     .ConfigureAwait(false);
-
                 if (battery is >= 0 and <= 100)
-                    detectedDevices.Add(registration.Definition.Name);
+                    detected.Add(model);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(
-                    $"Automatic device detection could not probe '{registration.Definition.Name}': {ex.Message}");
+                    $"Automatic device detection could not probe '{model}': {ex.Message}");
             }
         }
-
-        return detectedDevices;
+        return detected;
     }
 
     internal static double? GetNominalBatteryLifeHours(

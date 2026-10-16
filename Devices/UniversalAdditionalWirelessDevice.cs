@@ -267,6 +267,9 @@ public sealed class UniversalAdditionalWirelessDevice : HyperXBatteryDeviceBase
         VendorId = HyperXVendorId,
         ProductId = pid,
         InterfacePattern = $"VID_03F0&PID_{pid:X4}",
+        // Windows NGENUITY3 primary HID usages for Alpha2 and Flight2 Xbox.
+        ControlUsagePage = pid == 0x08BE ? (ushort)0xFF13 : (ushort)0xFF90,
+        ControlUsage = pid == 0x08BE ? (ushort)0xFF00 : (ushort)0xFF00,
         BatteryCommandBytes = new byte[] { BatteryQueryId, BatterySubreport },
         BatteryByteIndex = 2,
         SupportsMicrophoneMuteMonitoring = true,

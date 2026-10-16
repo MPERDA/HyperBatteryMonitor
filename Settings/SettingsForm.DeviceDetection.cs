@@ -273,11 +273,16 @@ public sealed partial class SettingsForm : Form
         {
             while (true)
             {
+                // HID enumeration/handle inspection is synchronous Win32 work.
+                // Keep it off the UI thread so the overlay countdown and Cancel
+                // remain responsive even with many receiver collections present.
                 unsupportedThreeInOneReceiverDetected |=
-                    HyperXDeviceManager.IsThreeInOneReceiverPresent();
+                    await Task.Run(HyperXDeviceManager.IsThreeInOneReceiverPresent,
+                        timeout.Token);
 
-                IReadOnlyList<string> detected =
-                    await HyperXDeviceManager.ProbeResponsiveDevicesAsync(timeout.Token);
+                IReadOnlyList<string> detected = await Task.Run(
+                    () => HyperXDeviceManager.ProbeResponsiveDevicesAsync(timeout.Token),
+                    timeout.Token);
 
                 if (detected.Count > 0)
                 {

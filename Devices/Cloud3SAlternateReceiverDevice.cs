@@ -24,6 +24,8 @@ public sealed class Cloud3SAlternateReceiverDevice : HyperXBatteryDeviceBase
         VendorId = 0x03F0,
         ProductId = 0x02CC,
         InterfacePattern = "VID_03F0&PID_02CC",
+        ControlUsagePage = 0x01C0,
+        ControlUsage = 0x0001,
         BatteryCommandBytes = new byte[]
         {
             CommandReportId, 0x02, 0x03, 0x01, 0x00, BatteryResponseSelector
@@ -57,6 +59,7 @@ public sealed class Cloud3SAlternateReceiverDevice : HyperXBatteryDeviceBase
 
         if (report.Length >= 7 &&
             report[0] == CommandReportId &&
+            report[1] == 0x02 && report[2] == 0x03 &&
             report[5] == BatteryResponseSelector)
         {
             if (report[6] == InvalidResponseValue)
@@ -88,6 +91,7 @@ public sealed class Cloud3SAlternateReceiverDevice : HyperXBatteryDeviceBase
 
         if (report.Length >= 7 &&
             report[0] == CommandReportId &&
+            report[1] == 0x02 && report[2] == 0x03 &&
             report[5] == ChargeResponseSelector)
         {
             if (report[6] == InvalidResponseValue)
@@ -119,6 +123,7 @@ public sealed class Cloud3SAlternateReceiverDevice : HyperXBatteryDeviceBase
 
         if (report.Length >= 7 &&
             report[0] == CommandReportId &&
+            report[1] == 0x02 && report[2] == 0x03 &&
             report[5] == MicrophoneMuteResponseSelector)
         {
             if (report[6] == InvalidResponseValue)

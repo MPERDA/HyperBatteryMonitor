@@ -2,7 +2,7 @@ using HyperXBatteryTray.Hid;
 
 namespace HyperXBatteryTray.Devices;
 
-public sealed class Cloud3WirelessAlternateReceiverDevice : IHyperXDevice
+public sealed class Cloud3WirelessAlternateReceiverDevice : IHyperXDevice, ISelectableHidEndpoint
 {
     private const byte ProtocolReportId = 0x66;
     private const byte BatteryResponseSelector = 0x89;
@@ -27,6 +27,10 @@ public sealed class Cloud3WirelessAlternateReceiverDevice : IHyperXDevice
     };
 
     private readonly HidConnection _connection = new();
+    private string? _selectedHidEndpoint;
+
+    void ISelectableHidEndpoint.SelectHidEndpoint(string path) =>
+        _selectedHidEndpoint = path;
     private readonly object _batteryRequestLock = new();
     private readonly object _chargeStatusRequestLock = new();
     private readonly object _microphoneMuteRequestLock = new();
@@ -73,7 +77,7 @@ public sealed class Cloud3WirelessAlternateReceiverDevice : IHyperXDevice
         if (_isConnected)
             return true;
 
-        string? devicePath = HidConnection.FindDevice(Definition);
+        string? devicePath = _selectedHidEndpoint ?? HidConnection.FindDevice(Definition);
 
         if (string.IsNullOrWhiteSpace(devicePath))
             return false;

@@ -101,6 +101,8 @@ public sealed class CloudStinger3WirelessDevice : HyperXBatteryDeviceBase
         // MI/Col is physically confirmed only for the Xbox variant; keep
         // the pre-existing PC/PlayStation matching rules unchanged.
         InterfacePattern = observedControlInterface ?? $"VID_03F0&PID_{pid:X4}",
+        ControlUsagePage = 0x01C0,
+        ControlUsage = 0x0001,
         BatteryCommandBytes = Command(BatterySelector),
         BatteryByteIndex = 6,
         SupportsChargingMonitoring = true,
